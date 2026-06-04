@@ -40,7 +40,9 @@ export function AuthPageShell({ mode }: AuthPageShellProps) {
           <AuthForm mode={mode} />
         )}
         <p className='m-0 text-sm text-slate-600'>
-          {mode === 'sign-in' ? 'Need an account? ' : 'Already have an account? '}
+          {mode === 'sign-in'
+            ? 'Need an account? '
+            : 'Already have an account? '}
           <Link
             href={mode === 'sign-in' ? '/sign-up' : '/sign-in'}
             className='font-medium text-slate-900 underline'

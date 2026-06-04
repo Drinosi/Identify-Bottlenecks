@@ -1,4 +1,19 @@
 services:
+  app:
+    build:
+      context: .
+    container_name: bottleneck-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/bottleneck
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: replace-with-a-long-random-secret
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:17
     container_name: bottleneck-postgres
@@ -11,6 +26,12 @@ services:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d bottleneck']
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   postgres_data:

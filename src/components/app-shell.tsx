@@ -85,7 +85,9 @@ export function AppShell() {
         <ul className='mb-4 ml-5 grid gap-2 text-slate-700'>
           <li>Create an onboarding flow after first sign up.</li>
           <li>Create an organization and make the current user the owner.</li>
-          <li>Replace the test bootstrap route with real user-driven actions.</li>
+          <li>
+            Replace the test bootstrap route with real user-driven actions.
+          </li>
         </ul>
         <p className='m-0 text-slate-700'>
           You can still visit{' '}
