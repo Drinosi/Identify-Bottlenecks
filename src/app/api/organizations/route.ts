@@ -23,6 +23,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null)
   const name = typeof body?.name === 'string' ? body.name.trim() : ''
+  const slug = createSlug(name)
 
   if (!name) {
     return NextResponse.json(
@@ -38,11 +39,11 @@ export async function POST(request: Request) {
 
     const organizationResult = await client.query(
       `
-      INSERT INTO organizations (name)
-      VALUES ($1)
+      INSERT INTO organizations (name, slug)
+      VALUES ($1, $2)
       RETURNING *
       `,
-      [name]
+      [name, slug]
     )
 
     const membershipResult = await client.query(
@@ -67,6 +68,13 @@ export async function POST(request: Request) {
     await client.query('ROLLBACK')
     console.error(error)
 
+    if (isUniqueViolation(error)) {
+      return NextResponse.json(
+        { error: 'Organization already exists' },
+        { status: 409 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Failed to create organization' },
       { status: 500 }
@@ -74,4 +82,17 @@ export async function POST(request: Request) {
   } finally {
     client.release()
   }
+}
+
+function createSlug(value: string) {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'organization'
+  )
+}
+
+function isUniqueViolation(error: unknown) {
+  return (error as { code?: string }).code === '23505'
 }

@@ -27,11 +27,13 @@ export async function POST() {
 
     const orgResult = await client.query(
       `
-      INSERT INTO organizations (name)
-      VALUES ($1)
+      INSERT INTO organizations (name, slug)
+      VALUES ($1, $2)
+      ON CONFLICT (slug)
+      DO UPDATE SET name = EXCLUDED.name
       RETURNING *
       `,
-      ['Bottleneck Test Org']
+      ['Bottleneck Test Org', 'bottleneck-test-org']
     )
 
     const memberResult = await client.query(
