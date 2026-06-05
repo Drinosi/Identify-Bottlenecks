@@ -28,6 +28,10 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Postgress
+
+docker compose exec postgres psql -U postgres -d bottleneck
+
 ## Docker
 
 Build and run the full stack:

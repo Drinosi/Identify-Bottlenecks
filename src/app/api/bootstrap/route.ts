@@ -9,14 +9,21 @@ export async function POST() {
 
     const userResult = await client.query(
       `
-      INSERT INTO users (email, name)
-      VALUES ($1, $2)
-      ON CONFLICT (email)
-      DO UPDATE SET name = EXCLUDED.name
-      RETURNING *
-      `,
-      ['drin@example.com', 'Drin']
+      SELECT *
+      FROM "user"
+      ORDER BY "createdAt" ASC
+      LIMIT 1
+      `
     )
+
+    if (!userResult.rows[0]) {
+      await client.query('ROLLBACK')
+
+      return NextResponse.json(
+        { error: 'Create an auth user before bootstrapping data' },
+        { status: 400 }
+      )
+    }
 
     const orgResult = await client.query(
       `

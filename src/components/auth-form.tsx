@@ -14,12 +14,11 @@ type AuthFormProps = {
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter()
   const [name, setName] = useState('')
+  const [organizationName, setOrganizationName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
-
-  console.log(typeof password)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -37,6 +36,24 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         if (result.error) {
           setError(result.error.message ?? 'Unable to create your account.')
+          return
+        }
+
+        const organizationResult = await fetch('/api/organizations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: organizationName }),
+        })
+
+        if (!organizationResult.ok) {
+          const response = await organizationResult.json().catch(() => null)
+
+          setError(
+            response?.error ??
+              'Your account was created, but organization setup failed.'
+          )
           return
         }
       } else {
@@ -72,6 +89,21 @@ export function AuthForm({ mode }: AuthFormProps) {
             onChange={(event) => setName(event.target.value)}
             required
             placeholder='Ada Lovelace'
+            className={inputClassName}
+          />
+        </label>
+      ) : null}
+
+      {mode === 'sign-up' ? (
+        <label className='grid gap-1.5'>
+          <span className='text-sm font-medium text-slate-700'>
+            Organization
+          </span>
+          <input
+            value={organizationName}
+            onChange={(event) => setOrganizationName(event.target.value)}
+            required
+            placeholder='Acme Inc'
             className={inputClassName}
           />
         </label>
