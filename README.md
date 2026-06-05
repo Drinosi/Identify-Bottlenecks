@@ -1,6 +1,6 @@
 # Identify Bottlenecks
 
-Next.js app with Better Auth and Postgres
+Next.js app with Better Auth and Postgres.
 
 ## Local Development
 
