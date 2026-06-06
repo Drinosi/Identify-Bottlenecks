@@ -36,9 +36,8 @@ export function AuthPageShell({ mode }: AuthPageShellProps) {
         </p>
         {isPending ? (
           <p className='m-0 text-sm text-slate-500'>Checking session...</p>
-        ) : (
-          <AuthForm mode={mode} />
-        )}
+        ) : null}
+        <AuthForm mode={mode} />
         <p className='m-0 text-sm text-slate-600'>
           {mode === 'sign-in'
             ? 'Need an account? '

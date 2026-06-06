@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 
@@ -22,7 +23,9 @@ export async function GET(request: Request) {
 
   const result = await db.query(
     `
-    SELECT organization_members.role
+    SELECT
+      organization_members.role,
+      organization_members.organization_id
     FROM organization_members
     WHERE organization_members.user_id = $1
       AND organization_members.role IN ('owner', 'admin')
@@ -38,7 +41,25 @@ export async function GET(request: Request) {
     )
   }
 
+  const state = randomUUID()
+
+  await db.query(
+    `
+    INSERT INTO github_install_states (
+      state,
+      organization_id,
+      user_id,
+      expires_at
+    )
+    VALUES ($1, $2, $3, NOW() + INTERVAL '15 minutes')
+    `,
+    [state, result.rows[0].organization_id, session.user.id]
+  )
+
+  const url = new URL(`https://github.com/apps/${appName}/installations/new`)
+  url.searchParams.set('state', state)
+
   return NextResponse.json({
-    url: `https://github.com/apps/${appName}/installations/new`,
+    url: url.toString(),
   })
 }
