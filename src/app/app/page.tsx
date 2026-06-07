@@ -1,5 +1,5 @@
-import { AppShell } from '@/components/app-shell'
+import { DashboardPage } from '@/components/DashboardPage'
 
 export default function AppPage() {
-  return <AppShell />
+  return <DashboardPage />
 }

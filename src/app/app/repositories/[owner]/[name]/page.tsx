@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { RepositoryDetailShell } from '@/components/repository-detail-shell'
+import { RepositoryDetailPage } from '@/components/RepositoryDetailPage'
 
 type RepositoryPageProps = {
   params: Promise<{
@@ -105,7 +105,7 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
   const metrics = metricsResult.rows[0]
 
   return (
-    <RepositoryDetailShell
+    <RepositoryDetailPage
       user={session.user}
       detail={{
         repository,

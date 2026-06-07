@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { AuthForm } from '@/components/auth-form'
+import { AuthForm } from '@/components/AuthForm'
 import { authClient } from '@/lib/auth-client'
 
-type AuthPageShellProps = {
+type AuthPageProps = {
   mode: 'sign-in' | 'sign-up'
 }
 
-export function AuthPageShell({ mode }: AuthPageShellProps) {
+export function AuthPage({ mode }: AuthPageProps) {
   const router = useRouter()
   const { data: session, isPending } = authClient.useSession()
 

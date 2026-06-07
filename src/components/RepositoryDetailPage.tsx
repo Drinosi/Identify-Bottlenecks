@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { MetricCard } from '@/components/metric-card'
-import { SignOutButton } from '@/components/sign-out-button'
+import { MetricCard } from '@/components/MetricCard'
+import { SignOutButton } from '@/components/SignOutButton'
 
-type RepositoryDetailShellProps = {
+type RepositoryDetailPageProps = {
   user: {
     name: string
     email: string
@@ -45,10 +45,10 @@ type PullRequest = {
   updated_at: string
 }
 
-export function RepositoryDetailShell({
+export function RepositoryDetailPage({
   user,
   detail,
-}: RepositoryDetailShellProps) {
+}: RepositoryDetailPageProps) {
   const repository = detail.repository
 
   return (
