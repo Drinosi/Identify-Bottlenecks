@@ -1,19 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { authClient } from '@/lib/auth-client'
+import { useState } from 'react'
 import { DashboardMetrics } from '@/components/DashboardMetrics'
 import { GitHubPanel } from '@/components/GithubPanel'
 import { RepositoryTable } from '@/components/RepositoryTable'
 import { SignOutButton } from '@/components/SignOutButton'
 import type { Workspace } from '@/components/dashboardTypes'
 
-export function DashboardPage() {
-  const router = useRouter()
-  const { data: session, isPending } = authClient.useSession()
-  const [workspace, setWorkspace] = useState<Workspace | null>(null)
-  const [isWorkspacePending, setIsWorkspacePending] = useState(false)
+type DashboardPageProps = {
+  initialWorkspace: Workspace
+}
+
+export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
+  const [workspace, setWorkspace] = useState<Workspace>(initialWorkspace)
   const [workspaceError, setWorkspaceError] = useState<string | null>(null)
   const [githubError, setGithubError] = useState<string | null>(null)
   const [githubSyncMessage, setGithubSyncMessage] = useState<string | null>(
@@ -26,65 +25,24 @@ export function DashboardPage() {
   const [syncingPullRequestRepositoryId, setSyncingPullRequestRepositoryId] =
     useState<string | null>(null)
 
-  useEffect(() => {
-    if (!isPending && !session?.session) {
-      router.replace('/sign-in')
-    }
-  }, [isPending, router, session])
+  const organization = workspace.organization
+  const github = workspace.github
+  const greeting = getGreeting()
 
-  useEffect(() => {
-    if (!session?.session) {
+  const canManageIntegrations =
+    organization?.role === 'owner' || organization?.role === 'admin'
+
+  async function refreshWorkspace() {
+    const response = await fetch('/api/me/workspace')
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      setWorkspaceError(data?.error ?? 'Unable to refresh workspace.')
       return
     }
 
-    let isMounted = true
-
-    async function loadWorkspace() {
-      setIsWorkspacePending(true)
-      setWorkspaceError(null)
-
-      try {
-        const response = await fetch('/api/me/workspace')
-        const data = await response.json().catch(() => null)
-
-        if (!response.ok) {
-          setWorkspaceError(data?.error ?? 'Unable to load workspace.')
-          return
-        }
-
-        if (isMounted) {
-          setWorkspace(data as Workspace)
-        }
-      } finally {
-        if (isMounted) {
-          setIsWorkspacePending(false)
-        }
-      }
-    }
-
-    loadWorkspace()
-
-    return () => {
-      isMounted = false
-    }
-  }, [session])
-
-  if (isPending || isWorkspacePending) {
-    return (
-      <main className='grid min-h-screen place-items-center px-6 py-12 text-slate-600'>
-        Loading workspace...
-      </main>
-    )
+    setWorkspace(data as Workspace)
   }
-
-  if (!session?.session || !session.user) {
-    return null
-  }
-
-  const organization = workspace?.organization
-  const github = workspace?.github
-  const canManageIntegrations =
-    organization?.role === 'owner' || organization?.role === 'admin'
 
   async function handleConnectGithub() {
     setGithubError(null)
@@ -123,7 +81,7 @@ export function DashboardPage() {
       }
 
       setGithubSyncMessage(`Synced ${data.synced} repositories.`)
-      window.location.reload()
+      await refreshWorkspace()
     } finally {
       setIsGithubSyncPending(false)
     }
@@ -155,7 +113,7 @@ export function DashboardPage() {
       }
 
       setGithubSyncMessage(`Synced ${data.synced} pull requests.`)
-      window.location.reload()
+      await refreshWorkspace()
     } finally {
       if (repositoryId) {
         setSyncingPullRequestRepositoryId(null)
@@ -171,7 +129,7 @@ export function DashboardPage() {
         <header className='flex min-w-0 flex-col justify-between gap-4 pb-6 sm:flex-row sm:items-start'>
           <div className='min-w-0'>
             <h1 className='m-0 max-w-full break-words text-3xl font-semibold tracking-tight'>
-              Good afternoon, {session.user?.name ?? 'Workspace setup'}
+              {greeting}, {workspace.user.name ?? 'Workspace setup'}
             </h1>
             <p className='mt-2 text-slate-500'>
               Here is how your engineering org is doing.
@@ -180,9 +138,9 @@ export function DashboardPage() {
           <div className='flex min-w-0 items-center gap-3 sm:shrink-0'>
             <div className='min-w-0 text-left text-sm text-slate-600 sm:text-right'>
               <p className='m-0 font-medium text-slate-900'>
-                {session.user.name}
+                {workspace.user.name}
               </p>
-              <p className='m-0 break-all'>{session.user.email}</p>
+              <p className='m-0 break-all'>{workspace.user.email}</p>
             </div>
             <SignOutButton />
           </div>
@@ -212,6 +170,7 @@ export function DashboardPage() {
             <GitHubPanel
               connected={Boolean(github?.connected)}
               accountLogin={github?.accountLogin ?? null}
+              installationId={github?.installationId ?? null}
               canManageIntegrations={canManageIntegrations}
               isGithubPending={isGithubPending}
               githubSyncMessage={githubSyncMessage}
@@ -233,4 +192,18 @@ export function DashboardPage() {
       </div>
     </main>
   )
+}
+
+function getGreeting() {
+  const hour = new Date().getHours()
+
+  if (hour < 12) {
+    return 'Good morning'
+  }
+
+  if (hour < 18) {
+    return 'Good afternoon'
+  }
+
+  return 'Good evening'
 }
