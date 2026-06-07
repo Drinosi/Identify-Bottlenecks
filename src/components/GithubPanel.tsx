@@ -1,6 +1,13 @@
+import Image from 'next/image'
+
+import cubes from '@/assets/images/github-cubes.webp'
+
+import { FaGithubSquare } from 'react-icons/fa'
+
 type GitHubPanelProps = {
   connected: boolean
   accountLogin: string | null
+  installationId: string | null
   canManageIntegrations: boolean
   isGithubPending: boolean
   githubSyncMessage: string | null
@@ -15,29 +22,46 @@ export function GitHubPanel({
   isGithubPending,
   githubSyncMessage,
   githubError,
+  installationId,
   onConnectGithub,
 }: GitHubPanelProps) {
   return (
-    <section className='rounded-lg bg-white p-6'>
-      <h2 className='m-0 text-xl font-semibold'>GitHub</h2>
-      <p className='mt-2 text-sm leading-6 text-slate-600'>
-        Connect the GitHub organization that owns the repositories you want to
-        analyze.
-      </p>
-      <dl className='my-5 grid gap-3 text-sm'>
-        <div>
-          <dt className='text-slate-500'>Status</dt>
-          <dd className='mt-1 font-medium'>
-            {connected ? 'Connected' : 'Not connected'}
+    <section className='rounded-lg bg-white p-4'>
+      <div className='flex items-center justify-between'>
+        <h2 className='font-semibold flex items-center gap-2'>
+          <FaGithubSquare className='text-5xl' />
+          GitHub
+        </h2>
+        <span
+          className={`${connected ? 'bg-green-100 text-green-900' : 'bg-red-100 text-red-900'} px-2.5 py-1 rounded-lg text-sm`}
+        >
+          {connected ? 'Connected' : 'Not connected'}
+        </span>
+      </div>
+      {accountLogin && (
+        <p className='text-slate-500 text-sm mt-2'>
+          Connected as <span className='text-black'>{accountLogin}</span>
+        </p>
+      )}
+      {installationId ? (
+        <div className='flex text-sm text-slate-500 mt-3 items-center justify-between'>
+          <dt className='text-slate-500'>Installation ID</dt>
+          <dd className='mt-1 px-2.5 py-1 bg-slate-100 rounded-full text-xs text-slate-900'>
+            {installationId}
           </dd>
         </div>
+      ) : null}
+
+      <dl className='my-5 grid gap-3 text-sm'>
         <div>
-          <dt className='text-slate-500'>Account</dt>
-          <dd className='mt-1 font-medium'>
-            {accountLogin === 'pending-sync'
-              ? 'Sync repositories to identify account'
-              : (accountLogin ?? 'Not connected')}
-          </dd>
+          <Image
+            loading='eager'
+            className='w-full h-[200px] object-cover rounded-lg'
+            src={cubes}
+            alt='github cubes'
+            width={0}
+            height={0}
+          />
         </div>
       </dl>
       {canManageIntegrations ? (

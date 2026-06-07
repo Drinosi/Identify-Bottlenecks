@@ -14,6 +14,7 @@ export type Workspace = {
   github: {
     connected: boolean
     accountLogin: string | null
+    installationId: string | null
     repositories: Repository[]
     pullRequests: {
       total: number
