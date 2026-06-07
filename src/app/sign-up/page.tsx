@@ -1,5 +1,5 @@
-import { AuthPageShell } from '@/components/auth-page-shell'
+import { AuthPage } from '@/components/AuthPage'
 
 export default function SignUpPage() {
-  return <AuthPageShell mode='sign-up' />
+  return <AuthPage mode='sign-up' />
 }

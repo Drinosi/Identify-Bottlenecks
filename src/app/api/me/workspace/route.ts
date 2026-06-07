@@ -75,6 +75,31 @@ export async function GET(request: Request) {
       )
     : { rows: [] }
 
+  const pullRequestMetricsResult = githubInstallation
+    ? await db.query(
+        `
+        SELECT
+          COUNT(*)::INT AS total_pull_requests,
+          COUNT(*) FILTER (
+            WHERE state = 'open'
+              AND first_reviewed_at IS NULL
+          )::INT AS waiting_for_review,
+          ROUND(
+            AVG(
+              EXTRACT(EPOCH FROM (first_reviewed_at - opened_at)) / 3600
+            ) FILTER (WHERE first_reviewed_at IS NOT NULL),
+            1
+          ) AS average_hours_to_first_review
+        FROM github_pull_requests
+        INNER JOIN github_repositories
+          ON github_repositories.id = github_pull_requests.github_repository_id
+        WHERE github_repositories.github_installation_id = $1
+        `,
+        [githubInstallation.id]
+      )
+    : { rows: [] }
+  const pullRequestMetrics = pullRequestMetricsResult.rows[0]
+
   return NextResponse.json({
     user: session.user,
     organization,
@@ -82,6 +107,14 @@ export async function GET(request: Request) {
       connected: Boolean(githubInstallation),
       accountLogin: githubInstallation?.account_login ?? null,
       repositories: repositoriesResult.rows,
+      pullRequests: {
+        total: pullRequestMetrics?.total_pull_requests ?? 0,
+        waitingForReview: pullRequestMetrics?.waiting_for_review ?? 0,
+        averageHoursToFirstReview:
+          pullRequestMetrics?.average_hours_to_first_review === null
+            ? null
+            : Number(pullRequestMetrics?.average_hours_to_first_review ?? 0),
+      },
     },
   })
 }
