@@ -15,15 +15,34 @@ type InstallationRepositoriesResponse = {
   repositories: GitHubRepository[]
 }
 
+export type GitHubPullRequest = {
+  id: number
+  number: number
+  title: string
+  state: string
+  draft: boolean
+  created_at: string
+  closed_at: string | null
+  merged_at: string | null
+  user: {
+    login: string
+  } | null
+}
+
+export type GitHubPullRequestReview = {
+  id: number
+  state: string
+  submitted_at: string | null
+}
+
 export async function fetchInstallationRepositories(installationId: string) {
   const token = await createInstallationAccessToken(installationId)
-  const response = await fetch('https://api.github.com/installation/repositories', {
-    headers: {
-      Accept: 'application/vnd.github+json',
-      Authorization: `Bearer ${token}`,
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-  })
+  const response = await fetch(
+    'https://api.github.com/installation/repositories',
+    {
+      headers: createGitHubHeaders(token),
+    }
+  )
 
   if (!response.ok) {
     throw new Error(`Failed to fetch repositories: ${response.status}`)
@@ -34,17 +53,40 @@ export async function fetchInstallationRepositories(installationId: string) {
   return data.repositories
 }
 
+export async function fetchRepositoryPullRequests(
+  installationId: string,
+  owner: string,
+  repo: string
+) {
+  const token = await createInstallationAccessToken(installationId)
+
+  return fetchPaginated<GitHubPullRequest>(
+    `https://api.github.com/repos/${owner}/${repo}/pulls?state=all&per_page=100`,
+    token
+  )
+}
+
+export async function fetchPullRequestReviews(
+  installationId: string,
+  owner: string,
+  repo: string,
+  pullNumber: number
+) {
+  const token = await createInstallationAccessToken(installationId)
+
+  return fetchPaginated<GitHubPullRequestReview>(
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/reviews?per_page=100`,
+    token
+  )
+}
+
 async function createInstallationAccessToken(installationId: string) {
   const jwt = createGitHubAppJwt()
   const response = await fetch(
     `https://api.github.com/app/installations/${installationId}/access_tokens`,
     {
       method: 'POST',
-      headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${jwt}`,
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
+      headers: createGitHubHeaders(jwt),
     }
   )
 
@@ -55,6 +97,47 @@ async function createInstallationAccessToken(installationId: string) {
   const data = (await response.json()) as { token: string }
 
   return data.token
+}
+
+async function fetchPaginated<T>(url: string, token: string) {
+  const items: T[] = []
+  let nextUrl: string | null = url
+
+  while (nextUrl) {
+    const response = await fetch(nextUrl, {
+      headers: createGitHubHeaders(token),
+    })
+
+    if (!response.ok) {
+      throw new Error(`GitHub request failed: ${response.status}`)
+    }
+
+    items.push(...((await response.json()) as T[]))
+    nextUrl = getNextPageUrl(response.headers.get('link'))
+  }
+
+  return items
+}
+
+function createGitHubHeaders(token: string) {
+  return {
+    Accept: 'application/vnd.github+json',
+    Authorization: `Bearer ${token}`,
+    'X-GitHub-Api-Version': '2022-11-28',
+  }
+}
+
+function getNextPageUrl(linkHeader: string | null) {
+  if (!linkHeader) {
+    return null
+  }
+
+  const nextLink = linkHeader
+    .split(',')
+    .map((link) => link.trim())
+    .find((link) => link.endsWith('rel="next"'))
+
+  return nextLink?.match(/<([^>]+)>/)?.[1] ?? null
 }
 
 function createGitHubAppJwt() {

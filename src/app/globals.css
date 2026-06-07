@@ -7,8 +7,10 @@
 body {
   background: #f8fafc;
   color: #0f172a;
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+@theme {
+  --color-purple-primary: #8534f3;
+  --color-purple-secondary: #8957e5;
 }
