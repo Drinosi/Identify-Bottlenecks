@@ -52,8 +52,21 @@ export async function POST(request: Request) {
 
   const client = await db.connect()
   let synced = 0
+  const repositoryIds = repositoriesResult.rows.map((repository) => repository.id)
 
   try {
+    await db.query(
+      `
+      UPDATE github_repositories
+      SET
+        pull_request_sync_status = 'syncing',
+        pull_request_sync_error = NULL,
+        updated_at = NOW()
+      WHERE id = ANY($1::UUID[])
+      `,
+      [repositoryIds]
+    )
+
     await client.query('BEGIN')
 
     for (const repository of repositoriesResult.rows) {
@@ -72,9 +85,8 @@ export async function POST(request: Request) {
         )
         const submittedReviews = reviews.filter((review) => review.submitted_at)
         const firstReviewedAt =
-          submittedReviews
-            .map((review) => review.submitted_at)
-            .sort()[0] ?? null
+          submittedReviews.map((review) => review.submitted_at).sort()[0] ??
+          null
 
         await client.query(
           `
@@ -124,6 +136,19 @@ export async function POST(request: Request) {
 
         synced += 1
       }
+
+      await client.query(
+        `
+        UPDATE github_repositories
+        SET
+          last_pull_request_synced_at = NOW(),
+          pull_request_sync_status = 'idle',
+          pull_request_sync_error = NULL,
+          updated_at = NOW()
+        WHERE id = $1
+        `,
+        [repository.id]
+      )
     }
 
     await client.query('COMMIT')
@@ -132,6 +157,17 @@ export async function POST(request: Request) {
   } catch (error) {
     await client.query('ROLLBACK')
     console.error(error)
+    await db.query(
+      `
+      UPDATE github_repositories
+      SET
+        pull_request_sync_status = 'failed',
+        pull_request_sync_error = $1,
+        updated_at = NOW()
+      WHERE id = ANY($2::UUID[])
+      `,
+      [error instanceof Error ? error.message : 'Unknown error', repositoryIds]
+    )
 
     return NextResponse.json(
       { error: 'Failed to sync pull requests' },

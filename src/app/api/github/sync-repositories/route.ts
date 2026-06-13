@@ -36,28 +36,43 @@ export async function POST(request: Request) {
     )
   }
 
-  const repositories = await fetchInstallationRepositories(
-    installation.installation_id
-  )
-  const accountLogin = repositories[0]?.owner.login
-
   const client = await db.connect()
+  let transactionStarted = false
 
   try {
-    await client.query('BEGIN')
+    await db.query(
+      `
+      UPDATE github_installations
+      SET
+        repository_sync_status = 'syncing',
+        repository_sync_error = NULL,
+        updated_at = NOW()
+      WHERE id = $1
+      `,
+      [installation.id]
+    )
 
-    if (accountLogin) {
-      await client.query(
-        `
-        UPDATE github_installations
-        SET
-          account_login = $1,
-          updated_at = NOW()
-        WHERE id = $2
-        `,
-        [accountLogin, installation.id]
-      )
-    }
+    const repositories = await fetchInstallationRepositories(
+      installation.installation_id
+    )
+    const accountLogin = repositories[0]?.owner.login
+
+    await client.query('BEGIN')
+    transactionStarted = true
+
+    await client.query(
+      `
+      UPDATE github_installations
+      SET
+        account_login = COALESCE($1, account_login),
+        last_repository_synced_at = NOW(),
+        repository_sync_status = 'idle',
+        repository_sync_error = NULL,
+        updated_at = NOW()
+      WHERE id = $2
+      `,
+      [accountLogin ?? null, installation.id]
+    )
 
     for (const repository of repositories) {
       await client.query(
@@ -100,8 +115,21 @@ export async function POST(request: Request) {
       synced: repositories.length,
     })
   } catch (error) {
-    await client.query('ROLLBACK')
+    if (transactionStarted) {
+      await client.query('ROLLBACK')
+    }
     console.error(error)
+    await db.query(
+      `
+      UPDATE github_installations
+      SET
+        repository_sync_status = 'failed',
+        repository_sync_error = $1,
+        updated_at = NOW()
+      WHERE id = $2
+      `,
+      [error instanceof Error ? error.message : 'Unknown error', installation.id]
+    )
 
     return NextResponse.json(
       { error: 'Failed to sync repositories' },

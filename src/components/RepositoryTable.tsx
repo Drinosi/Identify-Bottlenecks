@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { FaGithubSquare } from 'react-icons/fa'
 import { FaArrowsRotate } from 'react-icons/fa6'
 import { EmptyState } from '@/components/EmptyState'
-import { formatDate } from '@/components/dashboardUtils'
+import { formatSyncTime } from '@/components/dashboardUtils'
 import type { Repository } from '@/components/dashboardTypes'
 
 type RepositoryTableProps = {
@@ -85,8 +85,13 @@ export function RepositoryTable({
                       {repository.full_name}
                     </Link>
                     <p className='m-0 text-xs text-slate-500'>
-                      Last synced {formatDate(repository.updated_at)}
+                      PRs {formatSyncTime(repository.last_pull_request_synced_at)}
                     </p>
+                    {repository.pull_request_sync_error ? (
+                      <p className='m-0 mt-1 text-xs text-red-700'>
+                        {repository.pull_request_sync_error}
+                      </p>
+                    ) : null}
                   </td>
                   <td className='px-4 py-3 font-mono text-xs text-slate-700'>
                     {repository.default_branch}
@@ -95,16 +100,23 @@ export function RepositoryTable({
                     {repository.private ? 'Private' : 'Public'}
                   </td>
                   <td className='px-4 py-3'>
+                    {repository.pull_request_sync_status === 'failed' ? (
+                      <p className='m-0 mb-2 text-xs font-medium text-red-700'>
+                        Last sync failed
+                      </p>
+                    ) : null}
                     <button
                       type='button'
                       onClick={() => onSyncPullRequests(repository.id)}
                       disabled={
-                        syncingPullRequestRepositoryId === repository.id
+                        syncingPullRequestRepositoryId === repository.id ||
+                        repository.pull_request_sync_status === 'syncing'
                       }
                       className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-purple-primary bg-white px-3 py-2 text-xs font-medium text-purple-primary transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
                     >
                       <FaArrowsRotate />
-                      {syncingPullRequestRepositoryId === repository.id
+                      {syncingPullRequestRepositoryId === repository.id ||
+                      repository.pull_request_sync_status === 'syncing'
                         ? 'Syncing'
                         : 'Sync PRs'}
                     </button>

@@ -3,11 +3,16 @@ import Image from 'next/image'
 import cubes from '@/assets/images/github-cubes.webp'
 
 import { FaGithubSquare } from 'react-icons/fa'
+import { formatSyncTime } from '@/components/dashboardUtils'
+import type { SyncStatus } from '@/components/dashboardTypes'
 
 type GitHubPanelProps = {
   connected: boolean
   accountLogin: string | null
   installationId: string | null
+  lastRepositorySyncedAt: string | null
+  repositorySyncStatus: SyncStatus
+  repositorySyncError: string | null
   canManageIntegrations: boolean
   isGithubPending: boolean
   githubSyncMessage: string | null
@@ -20,6 +25,9 @@ export function GitHubPanel({
   accountLogin,
   canManageIntegrations,
   isGithubPending,
+  lastRepositorySyncedAt,
+  repositorySyncStatus,
+  repositorySyncError,
   githubSyncMessage,
   githubError,
   installationId,
@@ -49,6 +57,26 @@ export function GitHubPanel({
           <dd className='mt-1 px-2.5 py-1 bg-slate-100 rounded-full text-xs text-slate-900'>
             {installationId}
           </dd>
+        </div>
+      ) : null}
+      {connected ? (
+        <div className='mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm'>
+          <div className='flex items-center justify-between gap-3'>
+            <span className='text-slate-500'>Repository data</span>
+            <span
+              className={`${repositorySyncStatus === 'failed' ? 'bg-red-100 text-red-800' : repositorySyncStatus === 'syncing' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'} rounded-full px-2.5 py-1 text-xs font-medium`}
+            >
+              {repositorySyncStatus}
+            </span>
+          </div>
+          <p className='m-0 mt-2 text-slate-700'>
+            {formatSyncTime(lastRepositorySyncedAt)}
+          </p>
+          {repositorySyncError ? (
+            <p className='m-0 mt-2 text-xs text-red-700'>
+              {repositorySyncError}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

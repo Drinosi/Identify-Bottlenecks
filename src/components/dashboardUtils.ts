@@ -5,6 +5,14 @@ export function formatDate(value: string) {
   }).format(new Date(value))
 }
 
+export function formatSyncTime(value: string | null | undefined) {
+  if (!value) {
+    return 'Never synced'
+  }
+
+  return `Last synced ${formatDate(value)}`
+}
+
 export function formatReviewTime(hours: number | null | undefined) {
   if (hours === null || hours === undefined) {
     return 'No data'

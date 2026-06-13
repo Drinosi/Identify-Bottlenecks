@@ -33,6 +33,7 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
       github_repositories.full_name,
       github_repositories.default_branch,
       github_repositories.private,
+      github_repositories.last_pull_request_synced_at,
       github_repositories.updated_at,
       github_installations.account_login,
       organizations.name AS organization_name,

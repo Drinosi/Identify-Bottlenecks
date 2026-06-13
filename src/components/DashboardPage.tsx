@@ -171,6 +171,9 @@ export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
               connected={Boolean(github?.connected)}
               accountLogin={github?.accountLogin ?? null}
               installationId={github?.installationId ?? null}
+              lastRepositorySyncedAt={github?.lastRepositorySyncedAt ?? null}
+              repositorySyncStatus={github?.repositorySyncStatus ?? 'idle'}
+              repositorySyncError={github?.repositorySyncError ?? null}
               canManageIntegrations={canManageIntegrations}
               isGithubPending={isGithubPending}
               githubSyncMessage={githubSyncMessage}

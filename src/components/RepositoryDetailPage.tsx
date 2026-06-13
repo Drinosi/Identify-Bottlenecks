@@ -17,6 +17,7 @@ type RepositoryDetail = {
     full_name: string
     default_branch: string
     private: boolean
+    last_pull_request_synced_at: string | null
     updated_at: string
     account_login: string
     organization_name: string
@@ -68,6 +69,9 @@ export function RepositoryDetailPage({
             <p className='mt-2 text-slate-500'>
               {repository.organization_name} - {repository.default_branch} -{' '}
               {repository.private ? 'Private' : 'Public'}
+            </p>
+            <p className='mt-2 text-sm text-slate-500'>
+              PRs {formatSyncTime(repository.last_pull_request_synced_at)}
             </p>
           </div>
           <div className='flex min-w-0 items-center gap-3 sm:shrink-0'>
@@ -176,6 +180,14 @@ function formatDate(value: string) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
+}
+
+function formatSyncTime(value: string | null | undefined) {
+  if (!value) {
+    return 'Never synced'
+  }
+
+  return `Last synced ${formatDate(value)}`
 }
 
 function formatReviewTime(hours: number | null | undefined) {

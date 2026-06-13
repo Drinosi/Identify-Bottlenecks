@@ -172,9 +172,10 @@ function createGitHubAppJwt() {
 
 function getPrivateKey() {
   if (process.env.GITHUB_PRIVATE_KEY_BASE64) {
-    return Buffer.from(process.env.GITHUB_PRIVATE_KEY_BASE64, 'base64').toString(
-      'utf8'
-    )
+    return Buffer.from(
+      process.env.GITHUB_PRIVATE_KEY_BASE64,
+      'base64'
+    ).toString('utf8')
   }
 
   if (process.env.GITHUB_PRIVATE_KEY) {

@@ -3,6 +3,8 @@ import { FiActivity } from 'react-icons/fi'
 import { RiGitRepositoryFill } from 'react-icons/ri'
 import { MetricCard } from '@/components/MetricCard'
 import { formatReviewTime } from '@/components/dashboardUtils'
+import { evaluateMetricStatus } from '@/lib/evaluateMetricStatus'
+import { defaultMetricThresholds } from '@/lib/defaultMetricThresholds'
 import type { Workspace } from '@/components/dashboardTypes'
 
 type DashboardMetricsProps = {
@@ -10,8 +12,38 @@ type DashboardMetricsProps = {
 }
 
 export function DashboardMetrics({ github }: DashboardMetricsProps) {
+  const firstReviewStatus = evaluateMetricStatus({
+    value: github?.pullRequests.averageHoursToFirstReview,
+    warning: defaultMetricThresholds.pullRequest.firstReview.warningHours,
+    critical: defaultMetricThresholds.pullRequest.firstReview.criticalHours,
+  })
+  const waitingReviewStatus = evaluateMetricStatus({
+    value:
+      (github?.pullRequests.waitingForReview ?? 0) > 0
+        ? github?.pullRequests.oldestWaitingReviewHours
+        : 0,
+    warning: defaultMetricThresholds.pullRequest.openWithoutReview.warningHours,
+    critical:
+      defaultMetricThresholds.pullRequest.openWithoutReview.criticalHours,
+  })
+  const reviewedButUnmergedStatus = evaluateMetricStatus({
+    value:
+      (github?.pullRequests.reviewedButUnmerged ?? 0) > 0
+        ? github?.pullRequests.oldestReviewedButUnmergedHours
+        : 0,
+    warning:
+      defaultMetricThresholds.pullRequest.reviewedButUnmerged.warningHours,
+    critical:
+      defaultMetricThresholds.pullRequest.reviewedButUnmerged.criticalHours,
+  })
+  const mergeTimeStatus = evaluateMetricStatus({
+    value: github?.pullRequests.averageHoursToMerge,
+    warning: defaultMetricThresholds.pullRequest.mergeTime.warningHours,
+    critical: defaultMetricThresholds.pullRequest.mergeTime.criticalHours,
+  })
+
   return (
-    <section className='grid gap-4 md:grid-cols-3'>
+    <section className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
       <MetricCard
         label='Repositories'
         value={github?.repositories.length ?? 0}
@@ -23,12 +55,36 @@ export function DashboardMetrics({ github }: DashboardMetricsProps) {
         value={formatReviewTime(github?.pullRequests.averageHoursToFirstReview)}
         detail='First review and cycle-time metrics'
         icon={<FaClock className='text-2xl' />}
+        status={firstReviewStatus}
+      />
+      <MetricCard
+        label='Merge Time'
+        value={formatReviewTime(github?.pullRequests.averageHoursToMerge)}
+        detail='Average time from open to merge'
+        icon={<FaClock className='text-2xl' />}
+        status={mergeTimeStatus}
       />
       <MetricCard
         label='Waiting Review'
         value={github?.pullRequests.waitingForReview ?? 0}
-        detail={`${github?.pullRequests.total ?? 0} pull requests synced`}
+        detail={
+          (github?.pullRequests.waitingForReview ?? 0) > 0
+            ? `Oldest waiting ${formatReviewTime(github?.pullRequests.oldestWaitingReviewHours)}`
+            : `${github?.pullRequests.total ?? 0} pull requests synced`
+        }
         icon={<FiActivity className='text-3xl' />}
+        status={waitingReviewStatus}
+      />
+      <MetricCard
+        label='Ready to be merged'
+        value={github?.pullRequests.reviewedButUnmerged ?? 0}
+        detail={
+          (github?.pullRequests.reviewedButUnmerged ?? 0) > 0
+            ? `Oldest reviewed ${formatReviewTime(github?.pullRequests.oldestReviewedButUnmergedHours)}`
+            : `${github?.pullRequests.total ?? 0} pull requests synced`
+        }
+        icon={<FiActivity className='text-3xl' />}
+        status={reviewedButUnmergedStatus}
       />
     </section>
   )

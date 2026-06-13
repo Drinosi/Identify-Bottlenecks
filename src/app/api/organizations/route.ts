@@ -2,12 +2,26 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 
-export async function GET() {
-  const result = await db.query(`
-    SELECT *
+export async function GET(request: Request) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  })
+
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  const result = await db.query(
+    `
+    SELECT organizations.*
     FROM organizations
-    ORDER BY created_at DESC
-  `)
+    INNER JOIN organization_members
+      ON organization_members.organization_id = organizations.id
+    WHERE organization_members.user_id = $1
+    ORDER BY organizations.created_at DESC
+    `,
+    [session.user.id]
+  )
 
   return NextResponse.json(result.rows)
 }
@@ -36,6 +50,34 @@ export async function POST(request: Request) {
 
   try {
     await client.query('BEGIN')
+
+    const existingMembershipResult = await client.query(
+      `
+      SELECT
+        organizations.*,
+        organization_members.role
+      FROM organization_members
+      INNER JOIN organizations
+        ON organizations.id = organization_members.organization_id
+      WHERE organization_members.user_id = $1
+      LIMIT 1
+      `,
+      [session.user.id]
+    )
+
+    if (existingMembershipResult.rows[0]) {
+      await client.query('COMMIT')
+
+      return NextResponse.json(
+        {
+          organization: existingMembershipResult.rows[0],
+          membership: {
+            role: existingMembershipResult.rows[0].role,
+          },
+        },
+        { status: 200 }
+      )
+    }
 
     const organizationResult = await client.query(
       `
