@@ -75,7 +75,13 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
           EXTRACT(EPOCH FROM (first_reviewed_at - opened_at)) / 3600
         ) FILTER (WHERE first_reviewed_at IS NOT NULL),
         1
-      ) AS average_hours_to_first_review
+      ) AS average_hours_to_first_review,
+      ROUND(
+        AVG(
+          EXTRACT(EPOCH FROM (merged_at - opened_at)) / 3600
+        ) FILTER (WHERE merged_at IS NOT NULL),
+        1
+      ) AS average_hours_to_merge
     FROM github_pull_requests
     WHERE github_repository_id = $1
     `,
@@ -118,6 +124,10 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
             metrics?.average_hours_to_first_review === null
               ? null
               : Number(metrics?.average_hours_to_first_review ?? 0),
+          averageHoursToMerge:
+            metrics?.average_hours_to_merge === null
+              ? null
+              : Number(metrics?.average_hours_to_merge ?? 0),
         },
         pullRequests: pullRequestsResult.rows,
       }}

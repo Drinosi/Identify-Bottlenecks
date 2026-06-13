@@ -85,7 +85,8 @@ export function RepositoryTable({
                       {repository.full_name}
                     </Link>
                     <p className='m-0 text-xs text-slate-500'>
-                      PRs {formatSyncTime(repository.last_pull_request_synced_at)}
+                      PRs{' '}
+                      {formatSyncTime(repository.last_pull_request_synced_at)}
                     </p>
                     {repository.pull_request_sync_error ? (
                       <p className='m-0 mt-1 text-xs text-red-700'>

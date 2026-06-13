@@ -70,7 +70,7 @@ export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
     setIsGithubSyncPending(true)
 
     try {
-      const response = await fetch('/api/github/sync-repositories', {
+      const response = await fetch('/api/integrations/sync-repositories', {
         method: 'POST',
       })
       const data = await response.json().catch(() => null)
@@ -98,7 +98,7 @@ export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
     }
 
     try {
-      const response = await fetch('/api/github/sync-pull-requests', {
+      const response = await fetch('/api/integrations/sync-pull-requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

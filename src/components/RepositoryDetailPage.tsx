@@ -28,6 +28,7 @@ type RepositoryDetail = {
     openPullRequests: number
     waitingForReview: number
     averageHoursToFirstReview: number | null
+    averageHoursToMerge: number | null
   }
   pullRequests: PullRequest[]
 }
@@ -83,11 +84,16 @@ export function RepositoryDetailPage({
           </div>
         </header>
 
-        <section className='grid gap-4 md:grid-cols-3'>
+        <section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
           <MetricCard
             label='Average First Review'
             value={formatReviewTime(detail.metrics.averageHoursToFirstReview)}
             detail='Across synced pull requests'
+          />
+          <MetricCard
+            label='Merge Time'
+            value={formatReviewTime(detail.metrics.averageHoursToMerge)}
+            detail='Average time from open to merge'
           />
           <MetricCard
             label='Waiting Review'

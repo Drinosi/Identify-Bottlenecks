@@ -1,6 +1,6 @@
 import { createSign } from 'crypto'
 
-type GitHubRepository = {
+export type GitHubRepository = {
   id: number
   name: string
   full_name: string
@@ -22,6 +22,7 @@ export type GitHubPullRequest = {
   state: string
   draft: boolean
   created_at: string
+  updated_at: string
   closed_at: string | null
   merged_at: string | null
   user: {
@@ -56,13 +57,24 @@ export async function fetchInstallationRepositories(installationId: string) {
 export async function fetchRepositoryPullRequests(
   installationId: string,
   owner: string,
-  repo: string
+  repo: string,
+  updatedSince?: string | null
 ) {
   const token = await createInstallationAccessToken(installationId)
+  const url = new URL(`https://api.github.com/repos/${owner}/${repo}/pulls`)
+  url.searchParams.set('state', 'all')
+  url.searchParams.set('sort', 'updated')
+  url.searchParams.set('direction', 'desc')
+  url.searchParams.set('per_page', '100')
 
-  return fetchPaginated<GitHubPullRequest>(
-    `https://api.github.com/repos/${owner}/${repo}/pulls?state=all&per_page=100`,
-    token
+  if (!updatedSince) {
+    return fetchPaginated<GitHubPullRequest>(url.toString(), token)
+  }
+
+  return fetchPaginatedUntil<GitHubPullRequest>(
+    url.toString(),
+    token,
+    (pullRequest) => new Date(pullRequest.updated_at) <= new Date(updatedSince)
   )
 }
 
@@ -113,6 +125,39 @@ async function fetchPaginated<T>(url: string, token: string) {
     }
 
     items.push(...((await response.json()) as T[]))
+    nextUrl = getNextPageUrl(response.headers.get('link'))
+  }
+
+  return items
+}
+
+async function fetchPaginatedUntil<T>(
+  url: string,
+  token: string,
+  shouldStop: (item: T) => boolean
+) {
+  const items: T[] = []
+  let nextUrl: string | null = url
+
+  while (nextUrl) {
+    const response = await fetch(nextUrl, {
+      headers: createGitHubHeaders(token),
+    })
+
+    if (!response.ok) {
+      throw new Error(`GitHub request failed: ${response.status}`)
+    }
+
+    const pageItems = (await response.json()) as T[]
+
+    for (const item of pageItems) {
+      if (shouldStop(item)) {
+        return items
+      }
+
+      items.push(item)
+    }
+
     nextUrl = getNextPageUrl(response.headers.get('link'))
   }
 
