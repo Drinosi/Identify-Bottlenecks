@@ -70,7 +70,7 @@ export function DashboardMetrics({ github }: DashboardMetricsProps) {
         detail={
           github?.pipeline.successRateLast30Days === null
             ? 'No pipeline data in the last 30 days'
-            : `${github.pipeline.successRateLast30Days.toFixed(1)}% success rate in the last 30 days`
+            : `${github?.pipeline.successRateLast30Days.toFixed(1)}% success rate in the last 30 days`
         }
         icon={<FiActivity className='text-3xl' />}
       />
