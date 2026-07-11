@@ -15,9 +15,11 @@ type GitHubPanelProps = {
   repositorySyncError: string | null
   canManageIntegrations: boolean
   isGithubPending: boolean
+  isDisconnectGithubPending: boolean
   githubSyncMessage: string | null
   githubError: string | null
   onConnectGithub: () => void
+  onDisconnectGithub: () => void
 }
 
 export function GitHubPanel({
@@ -25,6 +27,7 @@ export function GitHubPanel({
   accountLogin,
   canManageIntegrations,
   isGithubPending,
+  isDisconnectGithubPending,
   lastRepositorySyncedAt,
   repositorySyncStatus,
   repositorySyncError,
@@ -32,6 +35,7 @@ export function GitHubPanel({
   githubError,
   installationId,
   onConnectGithub,
+  onDisconnectGithub,
 }: GitHubPanelProps) {
   return (
     <section className='rounded-lg bg-white p-4'>
@@ -103,9 +107,21 @@ export function GitHubPanel({
             {isGithubPending
               ? 'Connecting...'
               : connected
-                ? 'Reconnect GitHub'
+                ? 'Reinstall GitHub App'
                 : 'Connect GitHub'}
           </button>
+          {connected ? (
+            <button
+              type='button'
+              onClick={onDisconnectGithub}
+              disabled={isDisconnectGithubPending}
+              className='inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-wait disabled:opacity-70'
+            >
+              {isDisconnectGithubPending
+                ? 'Disconnecting...'
+                : 'Disconnect GitHub'}
+            </button>
+          ) : null}
           {githubSyncMessage ? (
             <p className='m-0 text-sm text-emerald-700'>{githubSyncMessage}</p>
           ) : null}

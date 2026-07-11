@@ -8,17 +8,20 @@ import { authClient } from '@/lib/auth-client'
 
 type AuthPageProps = {
   mode: 'sign-in' | 'sign-up'
+  inviteToken?: string | null
 }
 
-export function AuthPage({ mode }: AuthPageProps) {
+export function AuthPage({ mode, inviteToken }: AuthPageProps) {
   const router = useRouter()
   const { data: session, isPending } = authClient.useSession()
 
   useEffect(() => {
     if (session?.session) {
-      router.replace('/app')
+      router.replace(
+        inviteToken ? `/join?invite=${encodeURIComponent(inviteToken)}` : '/app'
+      )
     }
-  }, [router, session])
+  }, [inviteToken, router, session])
 
   return (
     <main className='grid min-h-screen place-items-center px-6 py-12'>
@@ -37,7 +40,7 @@ export function AuthPage({ mode }: AuthPageProps) {
         {isPending ? (
           <p className='m-0 text-sm text-slate-500'>Checking session...</p>
         ) : null}
-        <AuthForm mode={mode} />
+        <AuthForm mode={mode} inviteToken={inviteToken} />
         <p className='m-0 text-sm text-slate-600'>
           {mode === 'sign-in'
             ? 'Need an account? '

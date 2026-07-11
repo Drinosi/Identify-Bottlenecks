@@ -1,24 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { DashboardMetrics } from '@/components/DashboardMetrics'
 import { GitHubPanel } from '@/components/GithubPanel'
+import { OrganizationMembersPanel } from '@/components/OrganizationMembersPanel'
 import { RepositoryTable } from '@/components/RepositoryTable'
 import { SignOutButton } from '@/components/SignOutButton'
 import type { Workspace } from '@/components/dashboardTypes'
 
 type DashboardPageProps = {
   initialWorkspace: Workspace
+  initialGithubStatus: string | null
 }
 
-export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
+export function DashboardPage({
+  initialWorkspace,
+  initialGithubStatus,
+}: DashboardPageProps) {
+  const router = useRouter()
+  const initialGithubStatusMessage = initialGithubStatus
+    ? getGithubStatusMessage(initialGithubStatus)
+    : null
   const [workspace, setWorkspace] = useState<Workspace>(initialWorkspace)
   const [workspaceError, setWorkspaceError] = useState<string | null>(null)
-  const [githubError, setGithubError] = useState<string | null>(null)
+  const [githubError, setGithubError] = useState<string | null>(
+    initialGithubStatusMessage?.type === 'error'
+      ? initialGithubStatusMessage.message
+      : null
+  )
   const [githubSyncMessage, setGithubSyncMessage] = useState<string | null>(
-    null
+    initialGithubStatusMessage?.type === 'success'
+      ? initialGithubStatusMessage.message
+      : null
   )
   const [isGithubPending, setIsGithubPending] = useState(false)
+  const [isDisconnectGithubPending, setIsDisconnectGithubPending] =
+    useState(false)
   const [isGithubSyncPending, setIsGithubSyncPending] = useState(false)
   const [isPullRequestSyncPending, setIsPullRequestSyncPending] =
     useState(false)
@@ -31,6 +49,12 @@ export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
 
   const canManageIntegrations =
     organization?.role === 'owner' || organization?.role === 'admin'
+
+  useEffect(() => {
+    if (initialGithubStatus) {
+      router.replace('/app')
+    }
+  }, [initialGithubStatus, router])
 
   async function refreshWorkspace() {
     const response = await fetch('/api/me/workspace')
@@ -84,6 +108,29 @@ export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
       await refreshWorkspace()
     } finally {
       setIsGithubSyncPending(false)
+    }
+  }
+
+  async function handleDisconnectGithub() {
+    setGithubError(null)
+    setGithubSyncMessage(null)
+    setIsDisconnectGithubPending(true)
+
+    try {
+      const response = await fetch('/api/github/connection', {
+        method: 'DELETE',
+      })
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setGithubError(data?.error ?? 'Unable to disconnect GitHub.')
+        return
+      }
+
+      setGithubSyncMessage('Disconnected GitHub.')
+      await refreshWorkspace()
+    } finally {
+      setIsDisconnectGithubPending(false)
     }
   }
 
@@ -154,6 +201,15 @@ export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
 
         <DashboardMetrics github={github} />
 
+        {organization ? (
+          <OrganizationMembersPanel
+            organization={organization}
+            members={workspace.members}
+            invitations={workspace.invitations}
+            onRefreshWorkspace={refreshWorkspace}
+          />
+        ) : null}
+
         <section className='grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
           <RepositoryTable
             repositories={github?.repositories ?? []}
@@ -176,9 +232,11 @@ export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
               repositorySyncError={github?.repositorySyncError ?? null}
               canManageIntegrations={canManageIntegrations}
               isGithubPending={isGithubPending}
+              isDisconnectGithubPending={isDisconnectGithubPending}
               githubSyncMessage={githubSyncMessage}
               githubError={githubError}
               onConnectGithub={handleConnectGithub}
+              onDisconnectGithub={handleDisconnectGithub}
             />
 
             <section className='rounded-lg bg-white p-6'>
@@ -195,6 +253,41 @@ export function DashboardPage({ initialWorkspace }: DashboardPageProps) {
       </div>
     </main>
   )
+}
+
+function getGithubStatusMessage(status: string) {
+  switch (status) {
+    case 'connected':
+      return {
+        type: 'success' as const,
+        message: 'GitHub connected. Sync repositories to pull in data.',
+      }
+    case 'missing':
+      return {
+        type: 'error' as const,
+        message: 'GitHub did not return an installation ID.',
+      }
+    case 'missing-state':
+      return {
+        type: 'error' as const,
+        message: 'GitHub connection expired before it could be completed.',
+      }
+    case 'forbidden':
+      return {
+        type: 'error' as const,
+        message: 'That GitHub connection request is no longer valid.',
+      }
+    case 'verification-failed':
+      return {
+        type: 'error' as const,
+        message: 'GitHub connected, but installation verification failed.',
+      }
+    default:
+      return {
+        type: 'error' as const,
+        message: 'GitHub connection could not be completed.',
+      }
+  }
 }
 
 function getGreeting() {

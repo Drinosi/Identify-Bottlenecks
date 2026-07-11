@@ -36,6 +36,29 @@ export type GitHubPullRequestReview = {
   submitted_at: string | null
 }
 
+export type GitHubInstallation = {
+  id: number
+  account: {
+    login: string
+    type: string
+  } | null
+}
+
+export async function fetchInstallation(installationId: string) {
+  const response = await fetch(
+    `https://api.github.com/app/installations/${installationId}`,
+    {
+      headers: createGitHubHeaders(createGitHubAppJwt()),
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch installation: ${response.status}`)
+  }
+
+  return (await response.json()) as GitHubInstallation
+}
+
 export async function fetchInstallationRepositories(installationId: string) {
   const token = await createInstallationAccessToken(installationId)
   const response = await fetch(

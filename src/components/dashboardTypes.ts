@@ -11,6 +11,8 @@ export type Workspace = {
     created_at: string
     role: string
   } | null
+  members: OrganizationMember[]
+  invitations: OrganizationInvitation[]
   github: {
     connected: boolean
     accountLogin: string | null
@@ -42,6 +44,21 @@ export type Repository = {
   pull_request_sync_status: SyncStatus
   pull_request_sync_error: string | null
   updated_at: string
+}
+
+export type OrganizationMember = {
+  id: string
+  name: string
+  email: string
+  role: string
+}
+
+export type OrganizationInvitation = {
+  id: string
+  email: string
+  role: string
+  expires_at: string
+  invite_url: string
 }
 
 export type SyncStatus = 'idle' | 'syncing' | 'failed'

@@ -9,9 +9,10 @@ type AuthMode = 'sign-in' | 'sign-up'
 
 type AuthFormProps = {
   mode: AuthMode
+  inviteToken?: string | null
 }
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, inviteToken }: AuthFormProps) {
   const router = useRouter()
   const [name, setName] = useState('')
   const [organizationName, setOrganizationName] = useState('')
@@ -65,6 +66,24 @@ export function AuthForm({ mode }: AuthFormProps) {
           return
         }
 
+        const intentResponse = await fetch('/api/sign-up-intent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            organizationName: inviteToken ? undefined : organizationName,
+            inviteToken: inviteToken ?? undefined,
+          }),
+        })
+        const intentData = await intentResponse.json().catch(() => null)
+
+        if (!intentResponse.ok) {
+          setError(intentData?.error ?? 'Unable to save sign-up details.')
+          return
+        }
+
         const result = await authClient.signUp.email({
           name,
           email,
@@ -77,23 +96,11 @@ export function AuthForm({ mode }: AuthFormProps) {
           return
         }
 
-        const organizationResult = await fetch('/api/organizations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name: organizationName }),
-        })
-
-        if (!organizationResult.ok) {
-          const response = await organizationResult.json().catch(() => null)
-
-          setError(
-            response?.error ??
-              'Your account was created, but organization setup failed.'
-          )
-          return
-        }
+        router.push(
+          `/check-email?email=${encodeURIComponent(email)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ''}`
+        )
+        router.refresh()
+        return
       } else {
         const result = await authClient.signIn.email({
           email,
@@ -103,6 +110,14 @@ export function AuthForm({ mode }: AuthFormProps) {
         })
 
         if (result.error) {
+          if (isEmailNotVerifiedError(result.error)) {
+            router.push(
+              `/check-email?email=${encodeURIComponent(email)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ''}`
+            )
+            router.refresh()
+            return
+          }
+
           setError(result.error.message ?? 'Invalid email or password.')
           return
         }
@@ -144,10 +159,17 @@ export function AuthForm({ mode }: AuthFormProps) {
           <input
             value={organizationName}
             onChange={(event) => setOrganizationName(event.target.value)}
-            required
+            required={!inviteToken}
+            disabled={Boolean(inviteToken)}
             placeholder='Acme Inc'
             className={inputClassName}
           />
+          {inviteToken ? (
+            <span className='text-xs leading-5 text-slate-500'>
+              This account will join the organization from your invite instead
+              of creating a new one.
+            </span>
+          ) : null}
         </label>
       ) : null}
 
@@ -234,6 +256,13 @@ function validateAuthForm({
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+function isEmailNotVerifiedError(error: { code?: string; message?: string }) {
+  return (
+    error.code === 'EMAIL_NOT_VERIFIED' ||
+    error.message?.toLowerCase().includes('email not verified') === true
+  )
 }
 
 function getPasswordErrors(value: string) {

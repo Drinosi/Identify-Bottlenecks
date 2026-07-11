@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { fetchInstallation } from '@/lib/github'
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
@@ -34,6 +35,27 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/app?github=forbidden', request.url))
   }
 
+  let installation
+
+  try {
+    installation = await fetchInstallation(installationId)
+  } catch (error) {
+    console.error(error)
+
+    return NextResponse.redirect(
+      new URL('/app?github=verification-failed', request.url)
+    )
+  }
+
+  const accountLogin = installation.account?.login
+  const accountType = installation.account?.type
+
+  if (!accountLogin || !accountType) {
+    return NextResponse.redirect(
+      new URL('/app?github=verification-failed', request.url)
+    )
+  }
+
   await db.query(
     `
     INSERT INTO github_installations (
@@ -51,12 +73,7 @@ export async function GET(request: Request) {
       account_type = EXCLUDED.account_type,
       updated_at = NOW()
     `,
-    [
-      installState.organization_id,
-      installationId,
-      'pending-sync',
-      'Organization',
-    ]
+    [installState.organization_id, installationId, accountLogin, accountType]
   )
 
   await db.query(

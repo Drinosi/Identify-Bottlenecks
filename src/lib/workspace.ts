@@ -31,6 +31,8 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
     return {
       user,
       organization: null,
+      members: [],
+      invitations: [],
       github: {
         connected: false,
         accountLogin: null,
@@ -51,6 +53,41 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
       },
     }
   }
+
+  const baseUrl = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'
+
+  const membersResult = await db.query(
+    `
+    SELECT
+      organization_members.id,
+      "user".name,
+      "user".email,
+      organization_members.role
+    FROM organization_members
+    INNER JOIN "user"
+      ON "user".id = organization_members.user_id
+    WHERE organization_members.organization_id = $1
+    ORDER BY organization_members.created_at ASC
+    `,
+    [organization.id]
+  )
+
+  const invitationsResult = await db.query(
+    `
+    SELECT
+      id,
+      email,
+      role,
+      expires_at,
+      token
+    FROM organization_invitations
+    WHERE organization_id = $1
+      AND accepted_at IS NULL
+      AND expires_at > NOW()
+    ORDER BY created_at DESC
+    `,
+    [organization.id]
+  )
 
   const githubResult = await db.query(
     `
@@ -149,6 +186,11 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
   return {
     user,
     organization,
+    members: membersResult.rows,
+    invitations: invitationsResult.rows.map((invite) => ({
+      ...invite,
+      invite_url: `${baseUrl}/join?invite=${invite.token}`,
+    })),
     github: {
       connected: Boolean(githubInstallation),
       accountLogin: githubInstallation?.account_login ?? null,
