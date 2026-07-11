@@ -391,7 +391,8 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
                 pipelineMetrics?.baseline_median_hours_merge_to_pipeline ?? 0
               ),
         medianHoursMergeToPipelinePercentChange:
-          pipelineMetrics?.median_hours_merge_to_pipeline_percent_change === null
+          pipelineMetrics?.median_hours_merge_to_pipeline_percent_change ===
+          null
             ? null
             : Number(
                 pipelineMetrics?.median_hours_merge_to_pipeline_percent_change ??
