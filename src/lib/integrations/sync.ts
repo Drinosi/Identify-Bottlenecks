@@ -580,8 +580,7 @@ async function refreshRepositoryPipelineDailyMetrics(
       metric_dates.metric_date,
       workflow_run_daily.successful_runs_count,
       workflow_run_daily.failed_runs_count
-    `
-    ,
+    `,
     [repositoryId]
   )
 }
