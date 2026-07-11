@@ -10,6 +10,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Identify Bottlenecks',
   description: 'Auth-first setup for the Identify Bottlenecks application',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
