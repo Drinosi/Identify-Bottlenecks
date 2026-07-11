@@ -35,6 +35,10 @@ export const defaultMetricThresholds = {
       warningHours: 72,
       criticalHours: 168,
     },
+    mergeToPipelineIncrease: {
+      warningPercent: 25,
+      criticalPercent: 50,
+    },
   },
 } as const
 

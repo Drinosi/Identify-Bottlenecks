@@ -54,6 +54,8 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
           successfulRunsLast30Days: 0,
           successRateLast30Days: null,
           medianHoursMergeToPipeline: null,
+          baselineMedianHoursMergeToPipeline: null,
+          medianHoursMergeToPipelinePercentChange: null,
         },
       },
     }
@@ -257,7 +259,71 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
               ON first_successful_runs.github_repository_id = github_pull_requests.github_repository_id
               AND first_successful_runs.head_sha = github_pull_requests.merge_commit_sha
             WHERE github_repositories.github_installation_id = $1
-          ) AS median_hours_merge_to_pipeline
+          ) AS median_hours_merge_to_pipeline,
+          (
+            SELECT ROUND(
+              AVG(latest_baseline.median_merge_to_pipeline_hours)::NUMERIC,
+              1
+            )
+            FROM (
+              SELECT DISTINCT ON (github_repository_id)
+                github_repository_id,
+                metric_date,
+                median_merge_to_pipeline_hours
+              FROM github_repository_pipeline_daily_metrics
+              WHERE median_merge_to_pipeline_hours IS NOT NULL
+              ORDER BY github_repository_id, metric_date DESC
+            ) latest_daily
+            INNER JOIN LATERAL (
+              SELECT
+                AVG(baseline.median_merge_to_pipeline_hours) AS median_merge_to_pipeline_hours
+              FROM github_repository_pipeline_daily_metrics baseline
+              WHERE baseline.github_repository_id = latest_daily.github_repository_id
+                AND baseline.metric_date < latest_daily.metric_date
+                AND baseline.metric_date >= latest_daily.metric_date - INTERVAL '14 days'
+                AND baseline.median_merge_to_pipeline_hours IS NOT NULL
+            ) latest_baseline ON TRUE
+          ) AS baseline_median_hours_merge_to_pipeline,
+          (
+            SELECT ROUND(
+              AVG(latest_delta.percent_change)::NUMERIC,
+              1
+            )
+            FROM (
+              SELECT
+                latest_daily.github_repository_id,
+                CASE
+                  WHEN latest_baseline.baseline_value IS NULL
+                    OR latest_baseline.baseline_value = 0
+                    OR latest_daily.median_merge_to_pipeline_hours IS NULL
+                  THEN NULL
+                  ELSE (
+                    (
+                      latest_daily.median_merge_to_pipeline_hours
+                      - latest_baseline.baseline_value
+                    ) / latest_baseline.baseline_value
+                  ) * 100
+                END AS percent_change
+              FROM (
+                SELECT DISTINCT ON (github_repository_id)
+                  github_repository_id,
+                  metric_date,
+                  median_merge_to_pipeline_hours
+                FROM github_repository_pipeline_daily_metrics
+                WHERE median_merge_to_pipeline_hours IS NOT NULL
+                ORDER BY github_repository_id, metric_date DESC
+              ) latest_daily
+              INNER JOIN LATERAL (
+                SELECT
+                  AVG(baseline.median_merge_to_pipeline_hours) AS baseline_value
+                FROM github_repository_pipeline_daily_metrics baseline
+                WHERE baseline.github_repository_id = latest_daily.github_repository_id
+                  AND baseline.metric_date < latest_daily.metric_date
+                  AND baseline.metric_date >= latest_daily.metric_date - INTERVAL '14 days'
+                  AND baseline.median_merge_to_pipeline_hours IS NOT NULL
+              ) latest_baseline ON TRUE
+            ) latest_delta
+          ) AS median_hours_merge_to_pipeline_percent_change
         `,
         [githubInstallation.id]
       )
@@ -318,6 +384,19 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
           pipelineMetrics?.median_hours_merge_to_pipeline === null
             ? null
             : Number(pipelineMetrics?.median_hours_merge_to_pipeline ?? 0),
+        baselineMedianHoursMergeToPipeline:
+          pipelineMetrics?.baseline_median_hours_merge_to_pipeline === null
+            ? null
+            : Number(
+                pipelineMetrics?.baseline_median_hours_merge_to_pipeline ?? 0
+              ),
+        medianHoursMergeToPipelinePercentChange:
+          pipelineMetrics?.median_hours_merge_to_pipeline_percent_change === null
+            ? null
+            : Number(
+                pipelineMetrics?.median_hours_merge_to_pipeline_percent_change ??
+                  0
+              ),
       },
     },
   }

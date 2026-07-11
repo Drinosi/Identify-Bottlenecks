@@ -463,6 +463,8 @@ export async function syncWorkflowRunsForUser(
         `,
         [repository.id, syncStartedAt]
       )
+
+      await refreshRepositoryPipelineDailyMetrics(client, repository.id)
     }
 
     await client.query('COMMIT')
@@ -489,4 +491,97 @@ export async function syncWorkflowRunsForUser(
   } finally {
     client.release()
   }
+}
+
+async function refreshRepositoryPipelineDailyMetrics(
+  client: { query: (sql: string, values?: unknown[]) => Promise<unknown> },
+  repositoryId: string
+) {
+  await client.query(
+    `
+    DELETE FROM github_repository_pipeline_daily_metrics
+    WHERE github_repository_id = $1
+    `,
+    [repositoryId]
+  )
+
+  await client.query(
+    `
+    WITH first_successful_runs AS (
+      SELECT
+        head_sha,
+        MIN(run_started_at) AS first_successful_run_at
+      FROM github_workflow_runs
+      WHERE github_repository_id = $1
+        AND conclusion = 'success'
+        AND run_started_at IS NOT NULL
+      GROUP BY head_sha
+    ),
+    merge_to_pipeline_daily AS (
+      SELECT
+        DATE(first_successful_runs.first_successful_run_at) AS metric_date,
+        EXTRACT(EPOCH FROM (
+          first_successful_runs.first_successful_run_at - github_pull_requests.merged_at
+        )) / 3600 AS merge_to_pipeline_hours
+      FROM github_pull_requests
+      INNER JOIN first_successful_runs
+        ON first_successful_runs.head_sha = github_pull_requests.merge_commit_sha
+      WHERE github_pull_requests.github_repository_id = $1
+        AND github_pull_requests.merged_at IS NOT NULL
+    ),
+    workflow_run_daily AS (
+      SELECT
+        DATE(run_started_at) AS metric_date,
+        COUNT(*) FILTER (WHERE conclusion = 'success')::INT AS successful_runs_count,
+        COUNT(*) FILTER (
+          WHERE conclusion IS NOT NULL
+            AND conclusion <> 'success'
+        )::INT AS failed_runs_count
+      FROM github_workflow_runs
+      WHERE github_repository_id = $1
+        AND run_started_at IS NOT NULL
+      GROUP BY DATE(run_started_at)
+    ),
+    metric_dates AS (
+      SELECT metric_date FROM workflow_run_daily
+      UNION
+      SELECT metric_date FROM merge_to_pipeline_daily
+    )
+    INSERT INTO github_repository_pipeline_daily_metrics (
+      github_repository_id,
+      metric_date,
+      successful_runs_count,
+      failed_runs_count,
+      average_merge_to_pipeline_hours,
+      median_merge_to_pipeline_hours,
+      created_at,
+      updated_at
+    )
+    SELECT
+      $1,
+      metric_dates.metric_date,
+      COALESCE(workflow_run_daily.successful_runs_count, 0),
+      COALESCE(workflow_run_daily.failed_runs_count, 0),
+      ROUND(AVG(merge_to_pipeline_daily.merge_to_pipeline_hours)::NUMERIC, 1),
+      ROUND(
+        percentile_cont(0.5) WITHIN GROUP (
+          ORDER BY merge_to_pipeline_daily.merge_to_pipeline_hours
+        )::NUMERIC,
+        1
+      ),
+      NOW(),
+      NOW()
+    FROM metric_dates
+    LEFT JOIN workflow_run_daily
+      ON workflow_run_daily.metric_date = metric_dates.metric_date
+    LEFT JOIN merge_to_pipeline_daily
+      ON merge_to_pipeline_daily.metric_date = metric_dates.metric_date
+    GROUP BY
+      metric_dates.metric_date,
+      workflow_run_daily.successful_runs_count,
+      workflow_run_daily.failed_runs_count
+    `
+    ,
+    [repositoryId]
+  )
 }

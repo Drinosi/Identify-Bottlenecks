@@ -3,7 +3,9 @@ import { FiActivity } from 'react-icons/fi'
 import { RiGitRepositoryFill } from 'react-icons/ri'
 import { MetricCard } from '@/components/MetricCard'
 import { formatReviewTime } from '@/components/dashboardUtils'
+import { formatPercentDelta } from '@/components/dashboardUtils'
 import { evaluateMetricStatus } from '@/lib/evaluateMetricStatus'
+import { evaluateMetricDeltaStatus } from '@/lib/evaluateMetricDeltaStatus'
 import { defaultMetricThresholds } from '@/lib/defaultMetricThresholds'
 import type { Workspace } from '@/components/dashboardTypes'
 
@@ -40,6 +42,14 @@ export function DashboardMetrics({ github }: DashboardMetricsProps) {
     value: github?.pullRequests.averageHoursToMerge,
     warning: defaultMetricThresholds.pullRequest.mergeTime.warningHours,
     critical: defaultMetricThresholds.pullRequest.mergeTime.criticalHours,
+  })
+  const mergeToPipelineStatus = evaluateMetricDeltaStatus({
+    current: github?.pipeline.medianHoursMergeToPipeline,
+    baseline: github?.pipeline.baselineMedianHoursMergeToPipeline,
+    warningPercentIncrease:
+      defaultMetricThresholds.delivery.mergeToPipelineIncrease.warningPercent,
+    criticalPercentIncrease:
+      defaultMetricThresholds.delivery.mergeToPipelineIncrease.criticalPercent,
   })
 
   return (
@@ -99,8 +109,13 @@ export function DashboardMetrics({ github }: DashboardMetricsProps) {
       <MetricCard
         label='Merge to Pipeline'
         value={formatReviewTime(github?.pipeline.medianHoursMergeToPipeline)}
-        detail='Median time from PR merge to first successful pipeline'
+        detail={
+          github?.pipeline.baselineMedianHoursMergeToPipeline === null
+            ? 'Need more daily baseline data'
+            : `${formatPercentDelta(github?.pipeline.medianHoursMergeToPipelinePercentChange)} vs 14-day baseline`
+        }
         icon={<FaClock className='text-2xl' />}
+        status={mergeToPipelineStatus}
       />
     </section>
   )

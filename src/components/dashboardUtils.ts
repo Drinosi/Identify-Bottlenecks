@@ -24,3 +24,13 @@ export function formatReviewTime(hours: number | null | undefined) {
 
   return `${(hours / 24).toFixed(1)}d`
 }
+
+export function formatPercentDelta(value: number | null | undefined) {
+  if (value === null || value === undefined) {
+    return 'No baseline'
+  }
+
+  const prefix = value > 0 ? '+' : ''
+
+  return `${prefix}${value.toFixed(1)}%`
+}

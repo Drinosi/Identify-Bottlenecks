@@ -34,6 +34,8 @@ export type Workspace = {
       successfulRunsLast30Days: number
       successRateLast30Days: number | null
       medianHoursMergeToPipeline: number | null
+      baselineMedianHoursMergeToPipeline: number | null
+      medianHoursMergeToPipelinePercentChange: number | null
     }
   }
 }
