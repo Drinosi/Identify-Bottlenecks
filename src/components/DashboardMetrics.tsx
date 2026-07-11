@@ -65,6 +65,16 @@ export function DashboardMetrics({ github }: DashboardMetricsProps) {
         status={mergeTimeStatus}
       />
       <MetricCard
+        label='Successful Pipelines'
+        value={github?.pipeline.successfulRunsLast30Days ?? 0}
+        detail={
+          github?.pipeline.successRateLast30Days === null
+            ? 'No pipeline data in the last 30 days'
+            : `${github.pipeline.successRateLast30Days.toFixed(1)}% success rate in the last 30 days`
+        }
+        icon={<FiActivity className='text-3xl' />}
+      />
+      <MetricCard
         label='Waiting Review'
         value={github?.pullRequests.waitingForReview ?? 0}
         detail={
@@ -85,6 +95,12 @@ export function DashboardMetrics({ github }: DashboardMetricsProps) {
         }
         icon={<FiActivity className='text-3xl' />}
         status={reviewedButUnmergedStatus}
+      />
+      <MetricCard
+        label='Merge to Pipeline'
+        value={formatReviewTime(github?.pipeline.medianHoursMergeToPipeline)}
+        detail='Median time from PR merge to first successful pipeline'
+        icon={<FaClock className='text-2xl' />}
       />
     </section>
   )

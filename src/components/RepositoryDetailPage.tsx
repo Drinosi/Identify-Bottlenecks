@@ -29,8 +29,12 @@ type RepositoryDetail = {
     waitingForReview: number
     averageHoursToFirstReview: number | null
     averageHoursToMerge: number | null
+    successfulPipelineRunsLast30Days: number
+    pipelineSuccessRateLast30Days: number | null
+    medianHoursMergeToPipeline: number | null
   }
   pullRequests: PullRequest[]
+  workflowRuns: WorkflowRun[]
 }
 
 type PullRequest = {
@@ -44,6 +48,18 @@ type PullRequest = {
   merged_at: string | null
   first_reviewed_at: string | null
   review_count: number
+  updated_at: string
+}
+
+type WorkflowRun = {
+  github_workflow_run_id: number
+  name: string
+  conclusion: string | null
+  event: string
+  head_branch: string
+  head_sha: string
+  html_url: string | null
+  run_started_at: string | null
   updated_at: string
 }
 
@@ -105,6 +121,20 @@ export function RepositoryDetailPage({
             value={detail.metrics.openPullRequests}
             detail={`${detail.metrics.totalPullRequests} total synced`}
           />
+          <MetricCard
+            label='Successful Pipelines'
+            value={detail.metrics.successfulPipelineRunsLast30Days}
+            detail={
+              detail.metrics.pipelineSuccessRateLast30Days === null
+                ? 'No pipeline runs in the last 30 days'
+                : `${detail.metrics.pipelineSuccessRateLast30Days.toFixed(1)}% success rate`
+            }
+          />
+          <MetricCard
+            label='Merge to Pipeline'
+            value={formatReviewTime(detail.metrics.medianHoursMergeToPipeline)}
+            detail='Median time from merge to first successful pipeline'
+          />
         </section>
 
         <section className='min-w-0 rounded-lg bg-white p-4 sm:p-6'>
@@ -164,6 +194,73 @@ export function RepositoryDetailPage({
             <EmptyState
               title='No pull requests synced'
               body='Sync PRs from the workspace to populate repository metrics.'
+            />
+          )}
+        </section>
+
+        <section className='min-w-0 rounded-lg bg-white p-4 sm:p-6'>
+          <div className='mb-5'>
+            <h2 className='m-0 text-xl font-semibold'>Pipeline Runs</h2>
+            <p className='mt-1 text-sm text-slate-600'>
+              Latest successful and failed GitHub Actions runs on the default
+              branch.
+            </p>
+          </div>
+
+          {detail.workflowRuns.length ? (
+            <div className='overflow-x-auto rounded-lg border border-slate-200'>
+              <table className='w-full min-w-[760px] border-collapse text-left text-sm'>
+                <thead className='bg-slate-50 text-slate-500'>
+                  <tr>
+                    <th className='px-4 py-3 font-medium'>Run</th>
+                    <th className='px-4 py-3 font-medium'>Conclusion</th>
+                    <th className='px-4 py-3 font-medium'>Event</th>
+                    <th className='px-4 py-3 font-medium'>Branch</th>
+                    <th className='px-4 py-3 font-medium'>Started</th>
+                  </tr>
+                </thead>
+                <tbody className='divide-y divide-slate-200'>
+                  {detail.workflowRuns.map((workflowRun) => (
+                    <tr key={workflowRun.github_workflow_run_id}>
+                      <td className='px-4 py-3'>
+                        {workflowRun.html_url ? (
+                          <a
+                            href={workflowRun.html_url}
+                            target='_blank'
+                            rel='noreferrer'
+                            className='font-medium text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:decoration-slate-900'
+                          >
+                            {workflowRun.name}
+                          </a>
+                        ) : (
+                          <p className='m-0 font-medium text-slate-900'>
+                            {workflowRun.name}
+                          </p>
+                        )}
+                      </td>
+                      <td className='px-4 py-3 text-slate-700'>
+                        {workflowRun.conclusion ?? 'Unknown'}
+                      </td>
+                      <td className='px-4 py-3 text-slate-700'>
+                        {workflowRun.event}
+                      </td>
+                      <td className='px-4 py-3 text-slate-700'>
+                        {workflowRun.head_branch}
+                      </td>
+                      <td className='px-4 py-3 text-slate-700'>
+                        {workflowRun.run_started_at
+                          ? formatDate(workflowRun.run_started_at)
+                          : formatDate(workflowRun.updated_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              title='No pipeline runs synced'
+              body='Sync pipeline runs from the workspace to populate repository pipeline metrics.'
             />
           )}
         </section>

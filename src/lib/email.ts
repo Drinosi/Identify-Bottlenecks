@@ -5,12 +5,7 @@ type SendEmailOptions = {
   text: string
 }
 
-export async function sendEmail({
-  to,
-  subject,
-  html,
-  text,
-}: SendEmailOptions) {
+export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   const resendApiKey = process.env.RESEND_API_KEY
   const emailFrom = process.env.EMAIL_FROM
 

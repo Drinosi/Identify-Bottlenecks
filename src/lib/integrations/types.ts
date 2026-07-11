@@ -25,10 +25,25 @@ export type IntegrationPullRequest = {
   openedAt: string
   closedAt: string | null
   mergedAt: string | null
+  mergeCommitSha: string | null
 }
 
 export type IntegrationPullRequestReview = {
   submittedAt: string | null
+}
+
+export type IntegrationWorkflowRun = {
+  externalId: number
+  name: string
+  status: string
+  conclusion: string | null
+  event: string
+  headBranch: string
+  headSha: string
+  htmlUrl: string | null
+  runStartedAt: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export type IntegrationProvider = {
@@ -47,4 +62,9 @@ export type IntegrationProvider = {
     repository: Pick<IntegrationRepository, 'owner' | 'name'>,
     pullRequestNumber: number
   ) => Promise<IntegrationPullRequestReview[]>
+  listWorkflowRuns: (
+    connection: IntegrationConnection,
+    repository: Pick<IntegrationRepository, 'owner' | 'name' | 'defaultBranch'>,
+    options?: { updatedSince?: string | null }
+  ) => Promise<IntegrationWorkflowRun[]>
 }

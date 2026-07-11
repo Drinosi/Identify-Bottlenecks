@@ -176,7 +176,9 @@ function createSlug(value: string) {
 }
 
 async function generateUniqueSlug(
-  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }> },
+  client: {
+    query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }>
+  },
   baseSlug: string
 ) {
   let candidate = baseSlug

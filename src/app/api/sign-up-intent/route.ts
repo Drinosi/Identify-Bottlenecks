@@ -6,7 +6,9 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
   const email = normalizeEmail(body?.email)
   const organizationName =
-    typeof body?.organizationName === 'string' ? body.organizationName.trim() : ''
+    typeof body?.organizationName === 'string'
+      ? body.organizationName.trim()
+      : ''
   const inviteToken =
     typeof body?.inviteToken === 'string' ? body.inviteToken.trim() : ''
 

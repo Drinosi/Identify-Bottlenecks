@@ -11,9 +11,12 @@ type RepositoryTableProps = {
   canManageIntegrations: boolean
   isGithubSyncPending: boolean
   isPullRequestSyncPending: boolean
+  isWorkflowRunSyncPending: boolean
   syncingPullRequestRepositoryId: string | null
+  syncingWorkflowRunRepositoryId: string | null
   onSyncRepositories: () => void
   onSyncPullRequests: (repositoryId?: string) => void
+  onSyncWorkflowRuns: (repositoryId?: string) => void
 }
 
 export function RepositoryTable({
@@ -22,9 +25,12 @@ export function RepositoryTable({
   canManageIntegrations,
   isGithubSyncPending,
   isPullRequestSyncPending,
+  isWorkflowRunSyncPending,
   syncingPullRequestRepositoryId,
+  syncingWorkflowRunRepositoryId,
   onSyncRepositories,
   onSyncPullRequests,
+  onSyncWorkflowRuns,
 }: RepositoryTableProps) {
   return (
     <div className='min-w-0 rounded-lg bg-white p-4 sm:p-6'>
@@ -59,6 +65,15 @@ export function RepositoryTable({
                 ? 'Syncing...'
                 : 'Sync all repository PRs'}
             </button>
+            <button
+              type='button'
+              onClick={() => onSyncWorkflowRuns()}
+              disabled={isWorkflowRunSyncPending || !repositories.length}
+              className='mt-0 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-purple-primary bg-white px-4 py-2 text-sm font-medium text-purple-primary transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
+            >
+              <FaArrowsRotate />
+              {isWorkflowRunSyncPending ? 'Syncing...' : 'Sync all pipelines'}
+            </button>
           </div>
         ) : null}
       </div>
@@ -88,9 +103,18 @@ export function RepositoryTable({
                       PRs{' '}
                       {formatSyncTime(repository.last_pull_request_synced_at)}
                     </p>
+                    <p className='m-0 text-xs text-slate-500'>
+                      Pipelines{' '}
+                      {formatSyncTime(repository.last_workflow_run_synced_at)}
+                    </p>
                     {repository.pull_request_sync_error ? (
                       <p className='m-0 mt-1 text-xs text-red-700'>
                         {repository.pull_request_sync_error}
+                      </p>
+                    ) : null}
+                    {repository.workflow_run_sync_error ? (
+                      <p className='m-0 mt-1 text-xs text-red-700'>
+                        {repository.workflow_run_sync_error}
                       </p>
                     ) : null}
                   </td>
@@ -120,6 +144,21 @@ export function RepositoryTable({
                       repository.pull_request_sync_status === 'syncing'
                         ? 'Syncing'
                         : 'Sync PRs'}
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => onSyncWorkflowRuns(repository.id)}
+                      disabled={
+                        syncingWorkflowRunRepositoryId === repository.id ||
+                        repository.workflow_run_sync_status === 'syncing'
+                      }
+                      className='mt-2 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-purple-primary bg-white px-3 py-2 text-xs font-medium text-purple-primary transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
+                    >
+                      <FaArrowsRotate />
+                      {syncingWorkflowRunRepositoryId === repository.id ||
+                      repository.workflow_run_sync_status === 'syncing'
+                        ? 'Syncing'
+                        : 'Sync pipelines'}
                     </button>
                   </td>
                 </tr>

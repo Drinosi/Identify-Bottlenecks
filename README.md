@@ -68,6 +68,7 @@ http://localhost:3000/api/github/callback
 Recommended repository permissions for the current sync flow:
 
 - Pull requests: Read-only
+- Actions: Read-only
 - Contents / Metadata: Read-only
 
 After installing the app for an organization, use the dashboard to sync

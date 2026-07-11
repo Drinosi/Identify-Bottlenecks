@@ -34,6 +34,7 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
       github_repositories.default_branch,
       github_repositories.private,
       github_repositories.last_pull_request_synced_at,
+      github_repositories.last_workflow_run_synced_at,
       github_repositories.updated_at,
       github_installations.account_login,
       organizations.name AS organization_name,
@@ -61,6 +62,16 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
 
   const metricsResult = await db.query(
     `
+    WITH first_successful_runs AS (
+      SELECT
+        head_sha,
+        MIN(run_started_at) AS first_successful_run_at
+      FROM github_workflow_runs
+      WHERE github_repository_id = $1
+        AND conclusion = 'success'
+        AND run_started_at IS NOT NULL
+      GROUP BY head_sha
+    )
     SELECT
       COUNT(*)::INT AS total_pull_requests,
       COUNT(*) FILTER (
@@ -81,9 +92,40 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
           EXTRACT(EPOCH FROM (merged_at - opened_at)) / 3600
         ) FILTER (WHERE merged_at IS NOT NULL),
         1
-      ) AS average_hours_to_merge
+      ) AS average_hours_to_merge,
+      (
+        SELECT COUNT(*)::INT
+        FROM github_workflow_runs
+        WHERE github_repository_id = $1
+          AND conclusion = 'success'
+          AND run_started_at >= NOW() - INTERVAL '30 days'
+      ) AS successful_pipeline_runs_last_30_days,
+      (
+        SELECT ROUND(
+          (
+            COUNT(*) FILTER (WHERE conclusion = 'success')::NUMERIC
+            / NULLIF(COUNT(*), 0)::NUMERIC
+          ) * 100,
+          1
+        )
+        FROM github_workflow_runs
+        WHERE github_repository_id = $1
+          AND run_started_at >= NOW() - INTERVAL '30 days'
+      ) AS pipeline_success_rate_last_30_days,
+      ROUND(
+        (
+          percentile_cont(0.5) WITHIN GROUP (
+            ORDER BY EXTRACT(EPOCH FROM (
+              first_successful_runs.first_successful_run_at - github_pull_requests.merged_at
+            )) / 3600
+          )
+        )::NUMERIC,
+        1
+      ) AS median_hours_merge_to_pipeline
     FROM github_pull_requests
-    WHERE github_repository_id = $1
+    LEFT JOIN first_successful_runs
+      ON first_successful_runs.head_sha = github_pull_requests.merge_commit_sha
+    WHERE github_pull_requests.github_repository_id = $1
     `,
     [repository.id]
   )
@@ -111,6 +153,26 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
   )
   const metrics = metricsResult.rows[0]
 
+  const workflowRunsResult = await db.query(
+    `
+    SELECT
+      github_workflow_run_id,
+      name,
+      conclusion,
+      event,
+      head_branch,
+      head_sha,
+      html_url,
+      run_started_at,
+      updated_at
+    FROM github_workflow_runs
+    WHERE github_repository_id = $1
+    ORDER BY COALESCE(run_started_at, updated_at) DESC
+    LIMIT 50
+    `,
+    [repository.id]
+  )
+
   return (
     <RepositoryDetailPage
       user={session.user}
@@ -128,8 +190,19 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
             metrics?.average_hours_to_merge === null
               ? null
               : Number(metrics?.average_hours_to_merge ?? 0),
+          successfulPipelineRunsLast30Days:
+            metrics?.successful_pipeline_runs_last_30_days ?? 0,
+          pipelineSuccessRateLast30Days:
+            metrics?.pipeline_success_rate_last_30_days === null
+              ? null
+              : Number(metrics?.pipeline_success_rate_last_30_days ?? 0),
+          medianHoursMergeToPipeline:
+            metrics?.median_hours_merge_to_pipeline === null
+              ? null
+              : Number(metrics?.median_hours_merge_to_pipeline ?? 0),
         },
         pullRequests: pullRequestsResult.rows,
+        workflowRuns: workflowRunsResult.rows,
       }}
     />
   )

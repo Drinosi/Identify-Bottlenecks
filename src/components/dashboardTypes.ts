@@ -30,6 +30,11 @@ export type Workspace = {
       averageHoursToFirstReview: number | null
       averageHoursToMerge: number | null
     }
+    pipeline: {
+      successfulRunsLast30Days: number
+      successRateLast30Days: number | null
+      medianHoursMergeToPipeline: number | null
+    }
   }
 }
 
@@ -43,6 +48,9 @@ export type Repository = {
   last_pull_request_synced_at: string | null
   pull_request_sync_status: SyncStatus
   pull_request_sync_error: string | null
+  last_workflow_run_synced_at: string | null
+  workflow_run_sync_status: SyncStatus
+  workflow_run_sync_error: string | null
   updated_at: string
 }
 

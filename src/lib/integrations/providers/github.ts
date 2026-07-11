@@ -2,6 +2,7 @@ import {
   fetchInstallationRepositories,
   fetchPullRequestReviews,
   fetchRepositoryPullRequests,
+  fetchRepositoryWorkflowRuns,
 } from '@/lib/github'
 import type { IntegrationProvider } from '@/lib/integrations/types'
 
@@ -41,6 +42,7 @@ export const githubProvider: IntegrationProvider = {
       openedAt: pullRequest.created_at,
       closedAt: pullRequest.closed_at,
       mergedAt: pullRequest.merged_at,
+      mergeCommitSha: pullRequest.merge_commit_sha,
     }))
   },
   async listPullRequestReviews(connection, repository, pullRequestNumber) {
@@ -53,6 +55,29 @@ export const githubProvider: IntegrationProvider = {
 
     return reviews.map((review) => ({
       submittedAt: review.submitted_at,
+    }))
+  },
+  async listWorkflowRuns(connection, repository, options) {
+    const workflowRuns = await fetchRepositoryWorkflowRuns(
+      connection.externalInstallationId,
+      repository.owner,
+      repository.name,
+      repository.defaultBranch,
+      options?.updatedSince
+    )
+
+    return workflowRuns.map((workflowRun) => ({
+      externalId: workflowRun.id,
+      name: workflowRun.name,
+      status: workflowRun.status,
+      conclusion: workflowRun.conclusion,
+      event: workflowRun.event,
+      headBranch: workflowRun.head_branch,
+      headSha: workflowRun.head_sha,
+      htmlUrl: workflowRun.html_url,
+      runStartedAt: workflowRun.run_started_at,
+      createdAt: workflowRun.created_at,
+      updatedAt: workflowRun.updated_at,
     }))
   },
 }

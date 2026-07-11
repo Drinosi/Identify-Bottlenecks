@@ -40,7 +40,11 @@ export function DashboardPage({
   const [isGithubSyncPending, setIsGithubSyncPending] = useState(false)
   const [isPullRequestSyncPending, setIsPullRequestSyncPending] =
     useState(false)
+  const [isWorkflowRunSyncPending, setIsWorkflowRunSyncPending] =
+    useState(false)
   const [syncingPullRequestRepositoryId, setSyncingPullRequestRepositoryId] =
+    useState<string | null>(null)
+  const [syncingWorkflowRunRepositoryId, setSyncingWorkflowRunRepositoryId] =
     useState<string | null>(null)
 
   const organization = workspace.organization
@@ -170,6 +174,42 @@ export function DashboardPage({
     }
   }
 
+  async function handleSyncWorkflowRuns(repositoryId?: string) {
+    setGithubError(null)
+    setGithubSyncMessage(null)
+
+    if (repositoryId) {
+      setSyncingWorkflowRunRepositoryId(repositoryId)
+    } else {
+      setIsWorkflowRunSyncPending(true)
+    }
+
+    try {
+      const response = await fetch('/api/integrations/sync-workflow-runs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: repositoryId ? JSON.stringify({ repositoryId }) : undefined,
+      })
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setGithubError(data?.error ?? 'Unable to sync pipeline runs.')
+        return
+      }
+
+      setGithubSyncMessage(`Synced ${data.synced} pipeline runs.`)
+      await refreshWorkspace()
+    } finally {
+      if (repositoryId) {
+        setSyncingWorkflowRunRepositoryId(null)
+      } else {
+        setIsWorkflowRunSyncPending(false)
+      }
+    }
+  }
+
   return (
     <main className='min-h-screen overflow-x-hidden bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 sm:py-8'>
       <div className='mx-auto grid max-w-6xl min-w-0 gap-6'>
@@ -217,9 +257,12 @@ export function DashboardPage({
             canManageIntegrations={canManageIntegrations}
             isGithubSyncPending={isGithubSyncPending}
             isPullRequestSyncPending={isPullRequestSyncPending}
+            isWorkflowRunSyncPending={isWorkflowRunSyncPending}
             syncingPullRequestRepositoryId={syncingPullRequestRepositoryId}
+            syncingWorkflowRunRepositoryId={syncingWorkflowRunRepositoryId}
             onSyncRepositories={handleSyncRepositories}
             onSyncPullRequests={handleSyncPullRequests}
+            onSyncWorkflowRuns={handleSyncWorkflowRuns}
           />
 
           <aside className='grid gap-6'>

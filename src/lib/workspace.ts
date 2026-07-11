@@ -50,6 +50,11 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
           averageHoursToFirstReview: null,
           averageHoursToMerge: null,
         },
+        pipeline: {
+          successfulRunsLast30Days: 0,
+          successRateLast30Days: null,
+          medianHoursMergeToPipeline: null,
+        },
       },
     }
   }
@@ -119,6 +124,9 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
           last_pull_request_synced_at,
           pull_request_sync_status,
           pull_request_sync_error,
+          last_workflow_run_synced_at,
+          workflow_run_sync_status,
+          workflow_run_sync_error,
           updated_at
         FROM github_repositories
         WHERE github_installation_id = $1
@@ -183,6 +191,79 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
     : { rows: [] }
   const pullRequestMetrics = pullRequestMetricsResult.rows[0]
 
+  const pipelineMetricsResult = githubInstallation
+    ? await db.query(
+        `
+        WITH repository_runs AS (
+          SELECT
+            github_workflow_runs.conclusion,
+            github_workflow_runs.run_started_at
+          FROM github_workflow_runs
+          INNER JOIN github_repositories
+            ON github_repositories.id = github_workflow_runs.github_repository_id
+          WHERE github_repositories.github_installation_id = $1
+            AND github_workflow_runs.run_started_at >= NOW() - INTERVAL '30 days'
+        ),
+        first_successful_runs AS (
+          SELECT
+            github_workflow_runs.github_repository_id,
+            github_workflow_runs.head_sha,
+            MIN(github_workflow_runs.run_started_at) AS first_successful_run_at
+          FROM github_workflow_runs
+          INNER JOIN github_repositories
+            ON github_repositories.id = github_workflow_runs.github_repository_id
+          WHERE github_repositories.github_installation_id = $1
+            AND github_workflow_runs.conclusion = 'success'
+            AND github_workflow_runs.run_started_at IS NOT NULL
+          GROUP BY
+            github_workflow_runs.github_repository_id,
+            github_workflow_runs.head_sha
+        )
+        SELECT
+          (
+            SELECT COUNT(*) FILTER (
+              WHERE repository_runs.conclusion = 'success'
+            )::INT
+            FROM repository_runs
+          ) AS successful_runs_last_30_days,
+          (
+            SELECT ROUND(
+              (
+                COUNT(*) FILTER (
+                  WHERE repository_runs.conclusion = 'success'
+                )::NUMERIC
+                /
+                NULLIF(COUNT(*), 0)::NUMERIC
+              ) * 100,
+              1
+            )
+            FROM repository_runs
+          ) AS success_rate_last_30_days,
+          (
+            SELECT ROUND(
+              (
+                percentile_cont(0.5) WITHIN GROUP (
+                  ORDER BY EXTRACT(EPOCH FROM (
+                    first_successful_runs.first_successful_run_at - github_pull_requests.merged_at
+                  )) / 3600
+                )
+              )::NUMERIC,
+              1
+            )
+            FROM github_pull_requests
+            INNER JOIN github_repositories
+              ON github_repositories.id = github_pull_requests.github_repository_id
+            LEFT JOIN first_successful_runs
+              ON first_successful_runs.github_repository_id = github_pull_requests.github_repository_id
+              AND first_successful_runs.head_sha = github_pull_requests.merge_commit_sha
+            WHERE github_repositories.github_installation_id = $1
+          ) AS median_hours_merge_to_pipeline
+        `,
+        [githubInstallation.id]
+      )
+    : { rows: [] }
+  const pipelineMetrics = pipelineMetricsResult.rows[0]
+
   return {
     user,
     organization,
@@ -225,6 +306,18 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
           pullRequestMetrics?.average_hours_to_merge === null
             ? null
             : Number(pullRequestMetrics?.average_hours_to_merge ?? 0),
+      },
+      pipeline: {
+        successfulRunsLast30Days:
+          pipelineMetrics?.successful_runs_last_30_days ?? 0,
+        successRateLast30Days:
+          pipelineMetrics?.success_rate_last_30_days === null
+            ? null
+            : Number(pipelineMetrics?.success_rate_last_30_days ?? 0),
+        medianHoursMergeToPipeline:
+          pipelineMetrics?.median_hours_merge_to_pipeline === null
+            ? null
+            : Number(pipelineMetrics?.median_hours_merge_to_pipeline ?? 0),
       },
     },
   }

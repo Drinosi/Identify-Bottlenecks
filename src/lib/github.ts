@@ -25,6 +25,7 @@ export type GitHubPullRequest = {
   updated_at: string
   closed_at: string | null
   merged_at: string | null
+  merge_commit_sha: string | null
   user: {
     login: string
   } | null
@@ -42,6 +43,20 @@ export type GitHubInstallation = {
     login: string
     type: string
   } | null
+}
+
+export type GitHubWorkflowRun = {
+  id: number
+  name: string
+  status: string
+  conclusion: string | null
+  event: string
+  head_branch: string
+  head_sha: string
+  html_url: string | null
+  run_started_at: string | null
+  created_at: string
+  updated_at: string
 }
 
 export async function fetchInstallation(installationId: string) {
@@ -115,6 +130,37 @@ export async function fetchPullRequestReviews(
   )
 }
 
+export async function fetchRepositoryWorkflowRuns(
+  installationId: string,
+  owner: string,
+  repo: string,
+  branch: string,
+  updatedSince?: string | null
+) {
+  const token = await createInstallationAccessToken(installationId)
+  const url = new URL(
+    `https://api.github.com/repos/${owner}/${repo}/actions/runs`
+  )
+  url.searchParams.set('branch', branch)
+  url.searchParams.set('status', 'completed')
+  url.searchParams.set('per_page', '100')
+
+  if (!updatedSince) {
+    return fetchPaginatedWrapped<GitHubWorkflowRun>(
+      url.toString(),
+      token,
+      'workflow_runs'
+    )
+  }
+
+  return fetchPaginatedWrappedUntil<GitHubWorkflowRun>(
+    url.toString(),
+    token,
+    'workflow_runs',
+    (workflowRun) => new Date(workflowRun.updated_at) <= new Date(updatedSince)
+  )
+}
+
 async function createInstallationAccessToken(installationId: string) {
   const jwt = createGitHubAppJwt()
   const response = await fetch(
@@ -172,6 +218,66 @@ async function fetchPaginatedUntil<T>(
     }
 
     const pageItems = (await response.json()) as T[]
+
+    for (const item of pageItems) {
+      if (shouldStop(item)) {
+        return items
+      }
+
+      items.push(item)
+    }
+
+    nextUrl = getNextPageUrl(response.headers.get('link'))
+  }
+
+  return items
+}
+
+async function fetchPaginatedWrapped<T>(
+  url: string,
+  token: string,
+  collectionKey: string
+) {
+  const items: T[] = []
+  let nextUrl: string | null = url
+
+  while (nextUrl) {
+    const response = await fetch(nextUrl, {
+      headers: createGitHubHeaders(token),
+    })
+
+    if (!response.ok) {
+      throw new Error(`GitHub request failed: ${response.status}`)
+    }
+
+    const page = (await response.json()) as Record<string, T[]>
+    items.push(...(page[collectionKey] ?? []))
+    nextUrl = getNextPageUrl(response.headers.get('link'))
+  }
+
+  return items
+}
+
+async function fetchPaginatedWrappedUntil<T>(
+  url: string,
+  token: string,
+  collectionKey: string,
+  shouldStop: (item: T) => boolean
+) {
+  const items: T[] = []
+  let nextUrl: string | null = url
+
+  while (nextUrl) {
+    const response = await fetch(nextUrl, {
+      headers: createGitHubHeaders(token),
+    })
+
+    if (!response.ok) {
+      throw new Error(`GitHub request failed: ${response.status}`)
+    }
+
+    const page = (await response.json()) as Record<string, T[]>
+    const pageItems = page[collectionKey] ?? []
 
     for (const item of pageItems) {
       if (shouldStop(item)) {
