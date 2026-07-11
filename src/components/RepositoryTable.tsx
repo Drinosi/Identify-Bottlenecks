@@ -99,6 +99,16 @@ export function RepositoryTable({
                     >
                       {repository.full_name}
                     </Link>
+                    <p className='m-0 mt-1 text-xs'>
+                      <a
+                        href={`https://github.com/${repository.owner}/${repository.name}`}
+                        target='_blank'
+                        rel='noreferrer'
+                        className='text-slate-600 underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900 hover:decoration-slate-900'
+                      >
+                        Open on GitHub
+                      </a>
+                    </p>
                     <p className='m-0 text-xs text-slate-500'>
                       PRs{' '}
                       {formatSyncTime(repository.last_pull_request_synced_at)}
