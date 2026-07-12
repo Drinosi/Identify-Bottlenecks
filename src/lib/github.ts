@@ -59,6 +59,19 @@ export type GitHubWorkflowRun = {
   updated_at: string
 }
 
+export function getGitHubInstallationSettingsUrl(
+  accountLogin: string,
+  accountType: string
+) {
+  const normalizedType = accountType.toLowerCase()
+
+  if (normalizedType === 'organization') {
+    return `https://github.com/organizations/${accountLogin}/settings/installations`
+  }
+
+  return 'https://github.com/settings/installations'
+}
+
 export async function fetchInstallation(installationId: string) {
   const response = await fetch(
     `https://api.github.com/app/installations/${installationId}`,

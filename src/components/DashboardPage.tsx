@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { DashboardMetrics } from '@/components/DashboardMetrics'
 import { GitHubPanel } from '@/components/GithubPanel'
 import { OrganizationMembersPanel } from '@/components/OrganizationMembersPanel'
@@ -33,6 +34,10 @@ export function DashboardPage({
     initialGithubStatusMessage?.type === 'success'
       ? initialGithubStatusMessage.message
       : null
+  )
+  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false)
+  const [githubDisconnectUrl, setGithubDisconnectUrl] = useState<string | null>(
+    null
   )
   const [isGithubPending, setIsGithubPending] = useState(false)
   const [isDisconnectGithubPending, setIsDisconnectGithubPending] =
@@ -75,6 +80,7 @@ export function DashboardPage({
   async function handleConnectGithub() {
     setGithubError(null)
     setGithubSyncMessage(null)
+    setGithubDisconnectUrl(null)
     setIsGithubPending(true)
 
     try {
@@ -95,6 +101,7 @@ export function DashboardPage({
   async function handleSyncRepositories() {
     setGithubError(null)
     setGithubSyncMessage(null)
+    setGithubDisconnectUrl(null)
     setIsGithubSyncPending(true)
 
     try {
@@ -116,8 +123,10 @@ export function DashboardPage({
   }
 
   async function handleDisconnectGithub() {
+    setIsDisconnectDialogOpen(false)
     setGithubError(null)
     setGithubSyncMessage(null)
+    setGithubDisconnectUrl(null)
     setIsDisconnectGithubPending(true)
 
     try {
@@ -132,6 +141,7 @@ export function DashboardPage({
       }
 
       setGithubSyncMessage('Disconnected GitHub.')
+      setGithubDisconnectUrl(data?.uninstallUrl ?? null)
       await refreshWorkspace()
     } finally {
       setIsDisconnectGithubPending(false)
@@ -141,6 +151,7 @@ export function DashboardPage({
   async function handleSyncPullRequests(repositoryId?: string) {
     setGithubError(null)
     setGithubSyncMessage(null)
+    setGithubDisconnectUrl(null)
 
     if (repositoryId) {
       setSyncingPullRequestRepositoryId(repositoryId)
@@ -177,6 +188,7 @@ export function DashboardPage({
   async function handleSyncWorkflowRuns(repositoryId?: string) {
     setGithubError(null)
     setGithubSyncMessage(null)
+    setGithubDisconnectUrl(null)
 
     if (repositoryId) {
       setSyncingWorkflowRunRepositoryId(repositoryId)
@@ -211,90 +223,93 @@ export function DashboardPage({
   }
 
   return (
-    <main className='min-h-screen overflow-x-hidden bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 sm:py-8'>
-      <div className='mx-auto grid max-w-6xl min-w-0 gap-6'>
-        <header className='flex min-w-0 flex-col justify-between gap-4 pb-6 sm:flex-row sm:items-start'>
-          <div className='min-w-0'>
-            <h1 className='m-0 max-w-full break-words text-3xl font-semibold tracking-tight'>
-              {greeting}, {workspace.user.name ?? 'Workspace setup'}
-            </h1>
-            <p className='mt-2 text-slate-500'>
-              Here is how your engineering org is doing.
-            </p>
-          </div>
-          <div className='flex min-w-0 items-center gap-3 sm:shrink-0'>
-            <div className='min-w-0 text-left text-sm text-slate-600 sm:text-right'>
-              <p className='m-0 font-medium text-slate-900'>
-                {workspace.user.name}
+    <>
+      <ConfirmDialog
+        open={isDisconnectDialogOpen}
+        title='Disconnect GitHub?'
+        description='This removes the GitHub connection for this organization and clears synced repositories, pull requests, and pipeline data from the app.'
+        confirmLabel='Disconnect GitHub'
+        isPending={isDisconnectGithubPending}
+        tone='danger'
+        onConfirm={handleDisconnectGithub}
+        onCancel={() => setIsDisconnectDialogOpen(false)}
+      />
+      <main className='min-h-screen overflow-x-hidden bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 sm:py-8'>
+        <div className='mx-auto grid max-w-6xl min-w-0 gap-6'>
+          <header className='flex min-w-0 flex-col justify-between gap-4 pb-6 sm:flex-row sm:items-start'>
+            <div className='min-w-0'>
+              <h1 className='m-0 max-w-full break-words text-3xl font-semibold tracking-tight'>
+                {greeting}, {workspace.user.name ?? 'Workspace setup'}
+              </h1>
+              <p className='mt-2 text-slate-500'>
+                Here is how your engineering org is doing.
               </p>
-              <p className='m-0 break-all'>{workspace.user.email}</p>
             </div>
-            <SignOutButton />
-          </div>
-        </header>
+            <div className='flex min-w-0 items-center gap-3 sm:shrink-0'>
+              <div className='min-w-0 text-left text-sm text-slate-600 sm:text-right'>
+                <p className='m-0 font-medium text-slate-900'>
+                  {workspace.user.name}
+                </p>
+                <p className='m-0 break-all'>{workspace.user.email}</p>
+              </div>
+              <SignOutButton />
+            </div>
+          </header>
 
-        {workspaceError ? (
-          <section className='rounded-lg border border-red-200 bg-red-50 p-5 text-red-800'>
-            {workspaceError}
-          </section>
-        ) : null}
+          {workspaceError ? (
+            <section className='rounded-lg border border-red-200 bg-red-50 p-5 text-red-800'>
+              {workspaceError}
+            </section>
+          ) : null}
 
-        <DashboardMetrics github={github} />
+          <DashboardMetrics github={github} />
 
-        {organization ? (
-          <OrganizationMembersPanel
-            organization={organization}
-            members={workspace.members}
-            invitations={workspace.invitations}
-            onRefreshWorkspace={refreshWorkspace}
-          />
-        ) : null}
+          {organization ? (
+            <OrganizationMembersPanel
+              organization={organization}
+              members={workspace.members}
+              invitations={workspace.invitations}
+              onRefreshWorkspace={refreshWorkspace}
+            />
+          ) : null}
 
-        <section className='grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
-          <RepositoryTable
-            repositories={github?.repositories ?? []}
-            isGithubConnected={Boolean(github?.connected)}
-            canManageIntegrations={canManageIntegrations}
-            isGithubSyncPending={isGithubSyncPending}
-            isPullRequestSyncPending={isPullRequestSyncPending}
-            isWorkflowRunSyncPending={isWorkflowRunSyncPending}
-            syncingPullRequestRepositoryId={syncingPullRequestRepositoryId}
-            syncingWorkflowRunRepositoryId={syncingWorkflowRunRepositoryId}
-            onSyncRepositories={handleSyncRepositories}
-            onSyncPullRequests={handleSyncPullRequests}
-            onSyncWorkflowRuns={handleSyncWorkflowRuns}
-          />
-
-          <aside className='grid gap-6'>
-            <GitHubPanel
-              connected={Boolean(github?.connected)}
-              accountLogin={github?.accountLogin ?? null}
-              installationId={github?.installationId ?? null}
-              lastRepositorySyncedAt={github?.lastRepositorySyncedAt ?? null}
-              repositorySyncStatus={github?.repositorySyncStatus ?? 'idle'}
-              repositorySyncError={github?.repositorySyncError ?? null}
+          <section className='grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
+            <RepositoryTable
+              repositories={github?.repositories ?? []}
+              isGithubConnected={Boolean(github?.connected)}
               canManageIntegrations={canManageIntegrations}
-              isGithubPending={isGithubPending}
-              isDisconnectGithubPending={isDisconnectGithubPending}
-              githubSyncMessage={githubSyncMessage}
-              githubError={githubError}
-              onConnectGithub={handleConnectGithub}
-              onDisconnectGithub={handleDisconnectGithub}
+              isGithubSyncPending={isGithubSyncPending}
+              isPullRequestSyncPending={isPullRequestSyncPending}
+              isWorkflowRunSyncPending={isWorkflowRunSyncPending}
+              syncingPullRequestRepositoryId={syncingPullRequestRepositoryId}
+              syncingWorkflowRunRepositoryId={syncingWorkflowRunRepositoryId}
+              onSyncRepositories={handleSyncRepositories}
+              onSyncPullRequests={handleSyncPullRequests}
+              onSyncWorkflowRuns={handleSyncWorkflowRuns}
             />
 
-            <section className='rounded-lg bg-white p-6'>
-              <h2 className='m-0 text-xl font-semibold'>Next Metrics</h2>
-              <ul className='mt-4 grid gap-3 pl-5 text-sm leading-6 text-slate-700'>
-                <li>Average time to first PR review</li>
-                <li>Open PRs waiting longer than a week</li>
-                <li>Last commit by repository</li>
-                <li>PR cycle time by repository</li>
-              </ul>
-            </section>
-          </aside>
-        </section>
-      </div>
-    </main>
+            <aside className='grid gap-6 h-max'>
+              <GitHubPanel
+                connected={Boolean(github?.connected)}
+                accountLogin={github?.accountLogin ?? null}
+                installationId={github?.installationId ?? null}
+                lastRepositorySyncedAt={github?.lastRepositorySyncedAt ?? null}
+                repositorySyncStatus={github?.repositorySyncStatus ?? 'idle'}
+                repositorySyncError={github?.repositorySyncError ?? null}
+                canManageIntegrations={canManageIntegrations}
+                isGithubPending={isGithubPending}
+                isDisconnectGithubPending={isDisconnectGithubPending}
+                githubSyncMessage={githubSyncMessage}
+                githubError={githubError}
+                githubDisconnectUrl={githubDisconnectUrl}
+                onConnectGithub={handleConnectGithub}
+                onDisconnectGithub={() => setIsDisconnectDialogOpen(true)}
+              />
+            </aside>
+          </section>
+        </div>
+      </main>
+    </>
   )
 }
 
