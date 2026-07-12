@@ -63,7 +63,7 @@ export async function DELETE(request: Request) {
   )
 
   return NextResponse.json({
-    success: deleteResult.rowCount > 0,
+    success: (deleteResult.rowCount ?? 0) > 0,
     uninstallUrl: getGitHubInstallationSettingsUrl(
       installation.account_login,
       installation.account_type
