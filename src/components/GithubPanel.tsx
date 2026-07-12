@@ -18,6 +18,7 @@ type GitHubPanelProps = {
   isDisconnectGithubPending: boolean
   githubSyncMessage: string | null
   githubError: string | null
+  githubDisconnectUrl: string | null
   onConnectGithub: () => void
   onDisconnectGithub: () => void
 }
@@ -33,6 +34,7 @@ export function GitHubPanel({
   repositorySyncError,
   githubSyncMessage,
   githubError,
+  githubDisconnectUrl,
   installationId,
   onConnectGithub,
   onDisconnectGithub,
@@ -124,6 +126,20 @@ export function GitHubPanel({
           ) : null}
           {githubSyncMessage ? (
             <p className='m-0 text-sm text-emerald-700'>{githubSyncMessage}</p>
+          ) : null}
+          {githubDisconnectUrl ? (
+            <p className='m-0 text-sm text-slate-600'>
+              To fully remove access on GitHub too, uninstall the app in{' '}
+              <a
+                href={githubDisconnectUrl}
+                target='_blank'
+                rel='noreferrer'
+                className='text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:decoration-slate-900'
+              >
+                GitHub installation settings
+              </a>
+              .
+            </p>
           ) : null}
           {githubError ? (
             <p className='m-0 text-sm text-red-700'>{githubError}</p>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { getGitHubInstallationSettingsUrl } from '@/lib/github'
 
 export async function DELETE(request: Request) {
   const session = await auth.api.getSession({
@@ -32,6 +33,27 @@ export async function DELETE(request: Request) {
     )
   }
 
+  const installationResult = await db.query(
+    `
+    SELECT
+      account_login,
+      account_type
+    FROM github_installations
+    WHERE organization_id = $1
+    LIMIT 1
+    `,
+    [membership.organization_id]
+  )
+
+  const installation = installationResult.rows[0]
+
+  if (!installation) {
+    return NextResponse.json(
+      { error: 'GitHub is not connected for this organization' },
+      { status: 404 }
+    )
+  }
+
   const deleteResult = await db.query(
     `
     DELETE FROM github_installations
@@ -40,12 +62,11 @@ export async function DELETE(request: Request) {
     [membership.organization_id]
   )
 
-  if (deleteResult.rowCount === 0) {
-    return NextResponse.json(
-      { error: 'GitHub is not connected for this organization' },
-      { status: 404 }
-    )
-  }
-
-  return NextResponse.json({ success: true })
+  return NextResponse.json({
+    success: (deleteResult.rowCount ?? 0) > 0,
+    uninstallUrl: getGitHubInstallationSettingsUrl(
+      installation.account_login,
+      installation.account_type
+    ),
+  })
 }
