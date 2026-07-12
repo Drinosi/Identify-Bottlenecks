@@ -62,10 +62,7 @@ type WorkflowRun = {
   updated_at: string
 }
 
-export function RepositoryDetailPage({
-  user: _user,
-  detail,
-}: RepositoryDetailPageProps) {
+export function RepositoryDetailPage({ detail }: RepositoryDetailPageProps) {
   const repository = detail.repository
 
   return (
@@ -82,7 +79,9 @@ export function RepositoryDetailPage({
             {repository.full_name}
           </h1>
           <div className='mt-3 flex flex-wrap items-center gap-2 text-sm'>
-            <span className='text-slate-500'>{repository.organization_name}</span>
+            <span className='text-slate-500'>
+              {repository.organization_name}
+            </span>
             <span className='rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-700'>
               {repository.default_branch}
             </span>
@@ -351,7 +350,11 @@ function getWorkflowConclusionClassName(conclusion: string | null) {
     return 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700'
   }
 
-  if (conclusion === 'failure' || conclusion === 'cancelled' || conclusion === 'timed_out') {
+  if (
+    conclusion === 'failure' ||
+    conclusion === 'cancelled' ||
+    conclusion === 'timed_out'
+  ) {
     return 'rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700'
   }
 

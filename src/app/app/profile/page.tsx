@@ -98,7 +98,9 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                 />
               </label>
               <label className='grid gap-1.5'>
-                <span className='text-sm font-medium text-slate-700'>Email</span>
+                <span className='text-sm font-medium text-slate-700'>
+                  Email
+                </span>
                 <input
                   type='email'
                   value={profile?.email ?? session.user.email}

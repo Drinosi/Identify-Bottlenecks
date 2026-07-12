@@ -22,10 +22,7 @@ type WaitingReviewItem = {
   waitingHours: number
 }
 
-export function WaitingReviewPage({
-  user: _user,
-  items,
-}: WaitingReviewPageProps) {
+export function WaitingReviewPage({ items }: WaitingReviewPageProps) {
   const groupedItems = groupByRepository(items)
 
   return (
@@ -42,8 +39,8 @@ export function WaitingReviewPage({
             Pull Requests Waiting For Review
           </h1>
           <p className='mt-2 text-slate-500'>
-            Open pull requests without a first review, grouped by repository
-            and sorted from oldest to newest.
+            Open pull requests without a first review, grouped by repository and
+            sorted from oldest to newest.
           </p>
         </header>
 
@@ -66,7 +63,9 @@ export function WaitingReviewPage({
                     </div>
                     <p className='mt-1 text-sm text-slate-500'>
                       {group.items.length} open{' '}
-                      {group.items.length === 1 ? 'pull request' : 'pull requests'}{' '}
+                      {group.items.length === 1
+                        ? 'pull request'
+                        : 'pull requests'}{' '}
                       waiting for review
                     </p>
                   </div>
