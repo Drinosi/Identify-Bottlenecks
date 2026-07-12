@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { FaGithubSquare } from 'react-icons/fa'
 import { FaArrowsRotate } from 'react-icons/fa6'
+import { HiChevronDown } from 'react-icons/hi'
 import { EmptyState } from '@/components/EmptyState'
 import { formatSyncTime } from '@/components/dashboardUtils'
 import type { Repository } from '@/components/dashboardTypes'
@@ -44,37 +45,50 @@ export function RepositoryTable({
           </p>
         </div>
         {canManageIntegrations ? (
-          <div className='grid w-[250px] gap-2'>
-            <button
-              type='button'
-              onClick={onSyncRepositories}
-              disabled={isGithubSyncPending || !isGithubConnected}
-              className='mt-0 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-purple-primary bg-white px-4 py-2 text-sm font-medium text-purple-primary transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
-            >
-              <FaArrowsRotate />
-              {isGithubSyncPending ? 'Syncing...' : 'Sync repositories'}
-            </button>
-            <button
-              type='button'
-              onClick={() => onSyncPullRequests()}
-              disabled={isPullRequestSyncPending || !repositories.length}
-              className='mt-0 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-purple-primary bg-white px-4 py-2 text-sm font-medium text-purple-primary transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
-            >
-              <FaArrowsRotate />
-              {isPullRequestSyncPending
-                ? 'Syncing...'
-                : 'Sync all repository PRs'}
-            </button>
-            <button
-              type='button'
-              onClick={() => onSyncWorkflowRuns()}
-              disabled={isWorkflowRunSyncPending || !repositories.length}
-              className='mt-0 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-purple-primary bg-white px-4 py-2 text-sm font-medium text-purple-primary transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
-            >
-              <FaArrowsRotate />
-              {isWorkflowRunSyncPending ? 'Syncing...' : 'Sync all pipelines'}
-            </button>
-          </div>
+          <details className='group relative w-[170px]'>
+            <summary className='flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-black bg-white px-4 py-2 text-sm font-medium transition hover:bg-slate-50'>
+              <span className='inline-flex items-center gap-2'>
+                <FaArrowsRotate />
+                Sync data
+              </span>
+              <HiChevronDown className='text-lg transition group-open:rotate-180' />
+            </summary>
+            <div className='absolute right-0 z-10 mt-2 grid min-w-full gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-lg'>
+              <button
+                type='button'
+                onClick={onSyncRepositories}
+                disabled={isGithubSyncPending || !isGithubConnected}
+                className='inline-flex cursor-pointer items-center justify-between gap-3 rounded-lg text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
+              >
+                <span>Repositories</span>
+                <span className='text-xs text-slate-500'>
+                  {isGithubSyncPending ? 'Syncing...' : 'Run'}
+                </span>
+              </button>
+              <button
+                type='button'
+                onClick={() => onSyncPullRequests()}
+                disabled={isPullRequestSyncPending || !repositories.length}
+                className='inline-flex cursor-pointer items-center justify-between gap-3 rounded-lg text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
+              >
+                <span>All pull requests</span>
+                <span className='text-xs text-slate-500'>
+                  {isPullRequestSyncPending ? 'Syncing...' : 'Run'}
+                </span>
+              </button>
+              <button
+                type='button'
+                onClick={() => onSyncWorkflowRuns()}
+                disabled={isWorkflowRunSyncPending || !repositories.length}
+                className='inline-flex cursor-pointer items-center justify-between gap-3 rounded-lg text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
+              >
+                <span>All pipelines</span>
+                <span className='text-xs text-slate-500'>
+                  {isWorkflowRunSyncPending ? 'Syncing...' : 'Run'}
+                </span>
+              </button>
+            </div>
+          </details>
         ) : null}
       </div>
 
@@ -135,41 +149,57 @@ export function RepositoryTable({
                     {repository.private ? 'Private' : 'Public'}
                   </td>
                   <td className='px-4 py-3'>
-                    {repository.pull_request_sync_status === 'failed' ? (
-                      <p className='m-0 mb-2 text-xs font-medium text-red-700'>
-                        Last sync failed
-                      </p>
-                    ) : null}
-                    <button
-                      type='button'
-                      onClick={() => onSyncPullRequests(repository.id)}
-                      disabled={
-                        syncingPullRequestRepositoryId === repository.id ||
-                        repository.pull_request_sync_status === 'syncing'
-                      }
-                      className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-purple-primary bg-white px-3 py-2 text-xs font-medium text-purple-primary transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
-                    >
-                      <FaArrowsRotate />
-                      {syncingPullRequestRepositoryId === repository.id ||
-                      repository.pull_request_sync_status === 'syncing'
-                        ? 'Syncing'
-                        : 'Sync PRs'}
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => onSyncWorkflowRuns(repository.id)}
-                      disabled={
-                        syncingWorkflowRunRepositoryId === repository.id ||
-                        repository.workflow_run_sync_status === 'syncing'
-                      }
-                      className='mt-2 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-purple-primary bg-white px-3 py-2 text-xs font-medium text-purple-primary transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
-                    >
-                      <FaArrowsRotate />
-                      {syncingWorkflowRunRepositoryId === repository.id ||
-                      repository.workflow_run_sync_status === 'syncing'
-                        ? 'Syncing'
-                        : 'Sync pipelines'}
-                    </button>
+                    <details className='group relative w-[140px]'>
+                      <summary className='flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-black bg-white px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-slate-50'>
+                        <span className='inline-flex items-center gap-2'>
+                          <FaArrowsRotate />
+                          Sync
+                        </span>
+                        <HiChevronDown className='text-base transition group-open:rotate-180' />
+                      </summary>
+                      <div className='absolute right-0 z-10 mt-2 grid min-w-full gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-lg'>
+                        {repository.pull_request_sync_status === 'failed' ||
+                        repository.workflow_run_sync_status === 'failed' ? (
+                          <p className='m-0 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700'>
+                            Last sync failed
+                          </p>
+                        ) : null}
+                        <button
+                          type='button'
+                          onClick={() => onSyncPullRequests(repository.id)}
+                          disabled={
+                            syncingPullRequestRepositoryId === repository.id ||
+                            repository.pull_request_sync_status === 'syncing'
+                          }
+                          className='inline-flex cursor-pointer items-center justify-between gap-3 rounded-lg text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
+                        >
+                          <span>Pull requests</span>
+                          <span className='text-xs text-slate-500'>
+                            {syncingPullRequestRepositoryId === repository.id ||
+                            repository.pull_request_sync_status === 'syncing'
+                              ? 'Syncing...'
+                              : 'Run'}
+                          </span>
+                        </button>
+                        <button
+                          type='button'
+                          onClick={() => onSyncWorkflowRuns(repository.id)}
+                          disabled={
+                            syncingWorkflowRunRepositoryId === repository.id ||
+                            repository.workflow_run_sync_status === 'syncing'
+                          }
+                          className='inline-flex cursor-pointer items-center justify-between gap-3 rounded-lg text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
+                        >
+                          <span>Pipelines</span>
+                          <span className='text-xs text-slate-500'>
+                            {syncingWorkflowRunRepositoryId === repository.id ||
+                            repository.workflow_run_sync_status === 'syncing'
+                              ? 'Syncing...'
+                              : 'Run'}
+                          </span>
+                        </button>
+                      </div>
+                    </details>
                   </td>
                 </tr>
               ))}
