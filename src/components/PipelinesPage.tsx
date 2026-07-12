@@ -23,7 +23,7 @@ type PipelineItem = {
   startedAt: string
 }
 
-export function PipelinesPage({ user: _user, items }: PipelinesPageProps) {
+export function PipelinesPage({ items }: PipelinesPageProps) {
   const groupedItems = groupByRepository(items)
 
   return (
@@ -59,7 +59,9 @@ export function PipelinesPage({ user: _user, items }: PipelinesPageProps) {
                     </h2>
                     <p className='mt-1 text-sm text-slate-500'>
                       {group.items.length} synced{' '}
-                      {group.items.length === 1 ? 'pipeline run' : 'pipeline runs'}
+                      {group.items.length === 1
+                        ? 'pipeline run'
+                        : 'pipeline runs'}
                     </p>
                   </div>
                   <Link
@@ -134,8 +136,8 @@ export function PipelinesPage({ user: _user, items }: PipelinesPageProps) {
               No pipeline runs have been synced
             </h2>
             <p className='mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600'>
-              Sync workflow runs from the workspace to populate pipeline
-              history here.
+              Sync workflow runs from the workspace to populate pipeline history
+              here.
             </p>
           </section>
         )}
