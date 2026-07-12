@@ -62,7 +62,6 @@ export const githubProvider: IntegrationProvider = {
       connection.externalInstallationId,
       repository.owner,
       repository.name,
-      repository.defaultBranch,
       options?.updatedSince
     )
 

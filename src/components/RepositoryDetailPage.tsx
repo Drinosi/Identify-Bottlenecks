@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { MetricCard } from '@/components/MetricCard'
-import { SignOutButton } from '@/components/SignOutButton'
 
 type RepositoryDetailPageProps = {
   user: {
@@ -63,41 +62,42 @@ type WorkflowRun = {
   updated_at: string
 }
 
-export function RepositoryDetailPage({
-  user,
-  detail,
-}: RepositoryDetailPageProps) {
+export function RepositoryDetailPage({ detail }: RepositoryDetailPageProps) {
   const repository = detail.repository
 
   return (
-    <main className='min-h-screen overflow-x-hidden bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 sm:py-8'>
+    <main className='overflow-x-hidden px-4 py-6 text-slate-900 sm:px-6 sm:py-8'>
       <div className='mx-auto grid max-w-6xl min-w-0 gap-6'>
-        <header className='flex min-w-0 flex-col justify-between gap-4 sm:flex-row sm:items-start'>
-          <div className='min-w-0'>
-            <Link
-              href='/app'
-              className='text-sm font-medium text-slate-500 underline'
+        <header className='min-w-0'>
+          <Link
+            href='/app'
+            className='text-sm font-medium text-slate-500 underline'
+          >
+            Back to workspace
+          </Link>
+          <h1 className='mt-3 max-w-full break-words text-3xl font-semibold tracking-tight'>
+            {repository.full_name}
+          </h1>
+          <div className='mt-3 flex flex-wrap items-center gap-2 text-sm'>
+            <span className='text-slate-500'>
+              {repository.organization_name}
+            </span>
+            <span className='rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-700'>
+              {repository.default_branch}
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-1 font-medium ${
+                repository.private
+                  ? 'bg-amber-50 text-amber-700'
+                  : 'bg-emerald-50 text-emerald-700'
+              }`}
             >
-              Back to workspace
-            </Link>
-            <h1 className='mt-3 max-w-full break-words text-3xl font-semibold tracking-tight'>
-              {repository.full_name}
-            </h1>
-            <p className='mt-2 text-slate-500'>
-              {repository.organization_name} - {repository.default_branch} -{' '}
               {repository.private ? 'Private' : 'Public'}
-            </p>
-            <p className='mt-2 text-sm text-slate-500'>
-              PRs {formatSyncTime(repository.last_pull_request_synced_at)}
-            </p>
+            </span>
           </div>
-          <div className='flex min-w-0 items-center gap-3 sm:shrink-0'>
-            <div className='min-w-0 text-left text-sm text-slate-600 sm:text-right'>
-              <p className='m-0 font-medium text-slate-900'>{user.name}</p>
-              <p className='m-0 break-all'>{user.email}</p>
-            </div>
-            <SignOutButton />
-          </div>
+          <p className='mt-2 text-sm text-slate-500'>
+            PRs {formatSyncTime(repository.last_pull_request_synced_at)}
+          </p>
         </header>
 
         <section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
@@ -167,7 +167,11 @@ export function RepositoryDetailPage({
                         </p>
                       </td>
                       <td className='px-4 py-3 text-slate-700'>
-                        {pullRequest.state}
+                        <span
+                          className={getPullRequestStateClassName(pullRequest)}
+                        >
+                          {getPullRequestStateLabel(pullRequest)}
+                        </span>
                       </td>
                       <td className='px-4 py-3 text-slate-700'>
                         {pullRequest.author_login ?? 'Unknown'}
@@ -239,7 +243,13 @@ export function RepositoryDetailPage({
                         )}
                       </td>
                       <td className='px-4 py-3 text-slate-700'>
-                        {workflowRun.conclusion ?? 'Unknown'}
+                        <span
+                          className={getWorkflowConclusionClassName(
+                            workflowRun.conclusion
+                          )}
+                        >
+                          {workflowRun.conclusion ?? 'Unknown'}
+                        </span>
                       </td>
                       <td className='px-4 py-3 text-slate-700'>
                         {workflowRun.event}
@@ -305,4 +315,48 @@ function formatReviewTime(hours: number | null | undefined) {
   }
 
   return `${(hours / 24).toFixed(1)}d`
+}
+
+function getPullRequestStateLabel(pullRequest: PullRequest) {
+  if (pullRequest.merged_at) {
+    return 'Merged'
+  }
+
+  if (pullRequest.draft) {
+    return 'Draft'
+  }
+
+  return pullRequest.state === 'open' ? 'Open' : 'Closed'
+}
+
+function getPullRequestStateClassName(pullRequest: PullRequest) {
+  if (pullRequest.merged_at) {
+    return 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700'
+  }
+
+  if (pullRequest.draft) {
+    return 'rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600'
+  }
+
+  if (pullRequest.state === 'open') {
+    return 'rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700'
+  }
+
+  return 'rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700'
+}
+
+function getWorkflowConclusionClassName(conclusion: string | null) {
+  if (conclusion === 'success') {
+    return 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700'
+  }
+
+  if (
+    conclusion === 'failure' ||
+    conclusion === 'cancelled' ||
+    conclusion === 'timed_out'
+  ) {
+    return 'rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700'
+  }
+
+  return 'rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600'
 }

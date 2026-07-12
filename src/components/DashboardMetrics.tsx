@@ -83,24 +83,26 @@ export function DashboardMetrics({ github }: DashboardMetricsProps) {
             : `${github?.pipeline.successRateLast30Days.toFixed(1)}% success rate in the last 30 days`
         }
         icon={<FiActivity className='text-3xl' />}
+        href='/app/pipelines'
       />
       <MetricCard
         label='Waiting Review'
         value={github?.pullRequests.waitingForReview ?? 0}
         detail={
           (github?.pullRequests.waitingForReview ?? 0) > 0
-            ? `Oldest waiting ${formatReviewTime(github?.pullRequests.oldestWaitingReviewHours)}`
+            ? `Oldest waiting ${formatReviewTime(github?.pullRequests.oldestWaitingReviewHours)} in ${github?.pullRequests.oldestWaitingReviewRepositoryFullName ?? 'an unknown repository'}`
             : `${github?.pullRequests.total ?? 0} pull requests synced`
         }
         icon={<FiActivity className='text-3xl' />}
         status={waitingReviewStatus}
+        href='/app/pull-requests/waiting-review'
       />
       <MetricCard
         label='Ready to be merged'
         value={github?.pullRequests.reviewedButUnmerged ?? 0}
         detail={
           (github?.pullRequests.reviewedButUnmerged ?? 0) > 0
-            ? `Oldest reviewed ${formatReviewTime(github?.pullRequests.oldestReviewedButUnmergedHours)}`
+            ? `Oldest reviewed ${formatReviewTime(github?.pullRequests.oldestReviewedButUnmergedHours)} in ${github?.pullRequests.oldestReviewedButUnmergedRepositoryFullName ?? 'an unknown repository'}`
             : `${github?.pullRequests.total ?? 0} pull requests synced`
         }
         icon={<FiActivity className='text-3xl' />}

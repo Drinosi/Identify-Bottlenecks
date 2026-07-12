@@ -34,8 +34,8 @@ export function AuthPage({ mode, inviteToken }: AuthPageProps) {
         </h1>
         <p className='m-0 text-base leading-7 text-slate-600'>
           {mode === 'sign-in'
-            ? 'Start with auth, then we can layer in organizations and bottleneck analysis.'
-            : 'Get the auth layer solid first, then we can attach onboarding and company setup cleanly.'}
+            ? 'Access your workspace to review team bottlenecks, repositories, and delivery signals.'
+            : 'Create your workspace to start tracking engineering bottlenecks across your team.'}
         </p>
         {isPending ? (
           <p className='m-0 text-sm text-slate-500'>Checking session...</p>
