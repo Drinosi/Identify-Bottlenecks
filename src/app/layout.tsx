@@ -9,7 +9,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Identify Bottlenecks',
-  description: 'Auth-first setup for the Identify Bottlenecks application',
+  description:
+    'Identify engineering slowdowns across pull request review, pipeline health, and repository activity.',
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
@@ -23,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang='en' className={inter.variable}>
+    <html lang='en' suppressHydrationWarning className={inter.variable}>
       <body className='min-h-screen antialiased'>{children}</body>
     </html>
   )

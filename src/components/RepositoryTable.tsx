@@ -36,7 +36,7 @@ export function RepositoryTable({
   return (
     <div className='min-w-0 rounded-lg bg-white p-4 sm:p-6'>
       <div className='mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center'>
-        <div className='grid min-w-0 grid-cols-[max-content_auto] grid-rows-[24px_24px] items-center gap-x-2'>
+        <div className='grid min-w-0 grid-cols-[max-content_auto] grid-rows-[35px_35px] xl:grid-rows-[24px_24px] items-center gap-x-2'>
           <FaGithubSquare className='col-start-1 col-end-2 row-span-full text-5xl' />
           <h2 className='text-xl font-semibold'>Repositories</h2>
 
@@ -143,10 +143,20 @@ export function RepositoryTable({
                     ) : null}
                   </td>
                   <td className='px-4 py-3 font-mono text-xs text-slate-700'>
-                    {repository.default_branch}
+                    <span className='rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-700'>
+                      {repository.default_branch}
+                    </span>
                   </td>
                   <td className='px-4 py-3 text-slate-700'>
-                    {repository.private ? 'Private' : 'Public'}
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        repository.private
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-emerald-50 text-emerald-700'
+                      }`}
+                    >
+                      {repository.private ? 'Private' : 'Public'}
+                    </span>
                   </td>
                   <td className='px-4 py-3'>
                     <details className='group relative w-[140px]'>

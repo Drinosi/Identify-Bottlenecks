@@ -145,7 +145,6 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
             value={name}
             onChange={(event) => setName(event.target.value)}
             required
-            placeholder='Ada Lovelace'
             className={inputClassName}
           />
         </label>
@@ -161,7 +160,6 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
             onChange={(event) => setOrganizationName(event.target.value)}
             required={!inviteToken}
             disabled={Boolean(inviteToken)}
-            placeholder='Acme Inc'
             className={inputClassName}
           />
           {inviteToken ? (
@@ -180,7 +178,6 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
-          placeholder='founder@company.com'
           className={inputClassName}
         />
       </label>
@@ -193,11 +190,6 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
           onChange={(event) => setPassword(event.target.value)}
           required
           minLength={8}
-          placeholder={
-            mode === 'sign-up'
-              ? '8+ chars, uppercase, number, symbol'
-              : 'Your password'
-          }
           className={inputClassName}
         />
         {mode === 'sign-up' ? (

@@ -25,8 +25,10 @@ export type Workspace = {
       total: number
       waitingForReview: number
       oldestWaitingReviewHours: number | null
+      oldestWaitingReviewRepositoryFullName: string | null
       reviewedButUnmerged: number
       oldestReviewedButUnmergedHours: number | null
+      oldestReviewedButUnmergedRepositoryFullName: string | null
       averageHoursToFirstReview: number | null
       averageHoursToMerge: number | null
     }
