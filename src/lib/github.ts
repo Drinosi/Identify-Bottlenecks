@@ -147,14 +147,12 @@ export async function fetchRepositoryWorkflowRuns(
   installationId: string,
   owner: string,
   repo: string,
-  branch: string,
   updatedSince?: string | null
 ) {
   const token = await createInstallationAccessToken(installationId)
   const url = new URL(
     `https://api.github.com/repos/${owner}/${repo}/actions/runs`
   )
-  url.searchParams.set('branch', branch)
   url.searchParams.set('status', 'completed')
   url.searchParams.set('per_page', '100')
 

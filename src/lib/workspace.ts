@@ -45,8 +45,10 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
           total: 0,
           waitingForReview: 0,
           oldestWaitingReviewHours: null,
+          oldestWaitingReviewRepositoryFullName: null,
           reviewedButUnmerged: 0,
           oldestReviewedButUnmergedHours: null,
+          oldestReviewedButUnmergedRepositoryFullName: null,
           averageHoursToFirstReview: null,
           averageHoursToMerge: null,
         },
@@ -156,6 +158,17 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
             ),
             1
           ) AS oldest_waiting_review_hours,
+          (
+            SELECT github_repositories.full_name
+            FROM github_pull_requests oldest_waiting_pr
+            INNER JOIN github_repositories
+              ON github_repositories.id = oldest_waiting_pr.github_repository_id
+            WHERE github_repositories.github_installation_id = $1
+              AND oldest_waiting_pr.state = 'open'
+              AND oldest_waiting_pr.first_reviewed_at IS NULL
+            ORDER BY oldest_waiting_pr.opened_at ASC
+            LIMIT 1
+          ) AS oldest_waiting_review_repository_full_name,
           COUNT(*) FILTER (
             WHERE state = 'open'
               AND first_reviewed_at IS NOT NULL
@@ -171,6 +184,18 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
             ),
             1
           ) AS oldest_reviewed_but_unmerged_hours,
+          (
+            SELECT github_repositories.full_name
+            FROM github_pull_requests oldest_reviewed_pr
+            INNER JOIN github_repositories
+              ON github_repositories.id = oldest_reviewed_pr.github_repository_id
+            WHERE github_repositories.github_installation_id = $1
+              AND oldest_reviewed_pr.state = 'open'
+              AND oldest_reviewed_pr.first_reviewed_at IS NOT NULL
+              AND oldest_reviewed_pr.merged_at IS NULL
+            ORDER BY oldest_reviewed_pr.first_reviewed_at ASC
+            LIMIT 1
+          ) AS oldest_reviewed_but_unmerged_repository_full_name,
           ROUND(
             AVG(
               EXTRACT(EPOCH FROM (first_reviewed_at - opened_at)) / 3600
@@ -357,6 +382,9 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
           pullRequestMetrics?.oldest_waiting_review_hours === null
             ? null
             : Number(pullRequestMetrics?.oldest_waiting_review_hours ?? 0),
+        oldestWaitingReviewRepositoryFullName:
+          pullRequestMetrics?.oldest_waiting_review_repository_full_name ??
+          null,
         reviewedButUnmerged: pullRequestMetrics?.reviewed_but_unmerged ?? 0,
         oldestReviewedButUnmergedHours:
           pullRequestMetrics?.oldest_reviewed_but_unmerged_hours === null
@@ -364,6 +392,9 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
             : Number(
                 pullRequestMetrics?.oldest_reviewed_but_unmerged_hours ?? 0
               ),
+        oldestReviewedButUnmergedRepositoryFullName:
+          pullRequestMetrics?.oldest_reviewed_but_unmerged_repository_full_name ??
+          null,
         averageHoursToFirstReview:
           pullRequestMetrics?.average_hours_to_first_review === null
             ? null
