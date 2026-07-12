@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { DashboardMetrics } from '@/components/DashboardMetrics'
+import {
+  FirstSyncDialog,
+  type FirstSyncStep,
+  type FirstSyncStepStatus,
+} from '@/components/FirstSyncDialog'
 import { GitHubPanel } from '@/components/GithubPanel'
 import { OrganizationMembersPanel } from '@/components/OrganizationMembersPanel'
 import { RepositoryTable } from '@/components/RepositoryTable'
@@ -50,6 +55,15 @@ export function DashboardPage({
     useState<string | null>(null)
   const [syncingWorkflowRunRepositoryId, setSyncingWorkflowRunRepositoryId] =
     useState<string | null>(null)
+  const isFirstConnection = initialGithubStatus === 'connected-first'
+  const [isFirstSyncDialogOpen, setIsFirstSyncDialogOpen] =
+    useState(isFirstConnection)
+  const [isFirstSyncPending, setIsFirstSyncPending] = useState(false)
+  const [firstSyncError, setFirstSyncError] = useState<string | null>(null)
+  const [hasStartedFirstSync, setHasStartedFirstSync] = useState(false)
+  const [firstSyncSteps, setFirstSyncSteps] = useState<FirstSyncStep[]>(
+    createFirstSyncSteps()
+  )
 
   const organization = workspace.organization
   const github = workspace.github
@@ -74,6 +88,59 @@ export function DashboardPage({
     }
 
     setWorkspace(data as Workspace)
+  }
+
+  async function syncRepositories(): Promise<boolean> {
+    const response = await fetch('/api/integrations/sync-repositories', {
+      method: 'POST',
+    })
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      setGithubError(data?.error ?? 'Unable to sync repositories.')
+      return false
+    }
+
+    setGithubSyncMessage(`Synced ${data.synced} repositories.`)
+    return true
+  }
+
+  async function syncPullRequests(repositoryId?: string): Promise<boolean> {
+    const response = await fetch('/api/integrations/sync-pull-requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: repositoryId ? JSON.stringify({ repositoryId }) : undefined,
+    })
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      setGithubError(data?.error ?? 'Unable to sync pull requests.')
+      return false
+    }
+
+    setGithubSyncMessage(`Synced ${data.synced} pull requests.`)
+    return true
+  }
+
+  async function syncWorkflowRuns(repositoryId?: string): Promise<boolean> {
+    const response = await fetch('/api/integrations/sync-workflow-runs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: repositoryId ? JSON.stringify({ repositoryId }) : undefined,
+    })
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      setGithubError(data?.error ?? 'Unable to sync pipeline runs.')
+      return false
+    }
+
+    setGithubSyncMessage(`Synced ${data.synced} pipeline runs.`)
+    return true
   }
 
   async function handleConnectGithub() {
@@ -104,17 +171,12 @@ export function DashboardPage({
     setIsGithubSyncPending(true)
 
     try {
-      const response = await fetch('/api/integrations/sync-repositories', {
-        method: 'POST',
-      })
-      const data = await response.json().catch(() => null)
+      const didSync = await syncRepositories()
 
-      if (!response.ok) {
-        setGithubError(data?.error ?? 'Unable to sync repositories.')
+      if (!didSync) {
         return
       }
 
-      setGithubSyncMessage(`Synced ${data.synced} repositories.`)
       await refreshWorkspace()
     } finally {
       setIsGithubSyncPending(false)
@@ -159,21 +221,12 @@ export function DashboardPage({
     }
 
     try {
-      const response = await fetch('/api/integrations/sync-pull-requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: repositoryId ? JSON.stringify({ repositoryId }) : undefined,
-      })
-      const data = await response.json().catch(() => null)
+      const didSync = await syncPullRequests(repositoryId)
 
-      if (!response.ok) {
-        setGithubError(data?.error ?? 'Unable to sync pull requests.')
+      if (!didSync) {
         return
       }
 
-      setGithubSyncMessage(`Synced ${data.synced} pull requests.`)
       await refreshWorkspace()
     } finally {
       if (repositoryId) {
@@ -196,21 +249,12 @@ export function DashboardPage({
     }
 
     try {
-      const response = await fetch('/api/integrations/sync-workflow-runs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: repositoryId ? JSON.stringify({ repositoryId }) : undefined,
-      })
-      const data = await response.json().catch(() => null)
+      const didSync = await syncWorkflowRuns(repositoryId)
 
-      if (!response.ok) {
-        setGithubError(data?.error ?? 'Unable to sync pipeline runs.')
+      if (!didSync) {
         return
       }
 
-      setGithubSyncMessage(`Synced ${data.synced} pipeline runs.`)
       await refreshWorkspace()
     } finally {
       if (repositoryId) {
@@ -218,6 +262,64 @@ export function DashboardPage({
       } else {
         setIsWorkflowRunSyncPending(false)
       }
+    }
+  }
+
+  async function handleRunFirstSync() {
+    setGithubError(null)
+    setGithubSyncMessage(null)
+    setGithubDisconnectUrl(null)
+    setFirstSyncError(null)
+    setHasStartedFirstSync(true)
+    setIsFirstSyncPending(true)
+    setFirstSyncSteps(createFirstSyncSteps())
+
+    try {
+      const steps: Array<{
+        key: FirstSyncStep['key']
+        run: () => Promise<boolean>
+        failureMessage: string
+      }> = [
+        {
+          key: 'repositories',
+          run: syncRepositories,
+          failureMessage: 'Unable to sync repositories.',
+        },
+        {
+          key: 'pullRequests',
+          run: () => syncPullRequests(),
+          failureMessage: 'Unable to sync pull requests.',
+        },
+        {
+          key: 'workflowRuns',
+          run: () => syncWorkflowRuns(),
+          failureMessage: 'Unable to sync pipeline runs.',
+        },
+      ]
+
+      for (const step of steps) {
+        setFirstSyncSteps((currentSteps) =>
+          updateFirstSyncStep(currentSteps, step.key, 'loading')
+        )
+
+        const didSync = await step.run()
+
+        if (!didSync) {
+          setFirstSyncSteps((currentSteps) =>
+            updateFirstSyncStep(currentSteps, step.key, 'error')
+          )
+          setFirstSyncError(step.failureMessage)
+          return
+        }
+
+        setFirstSyncSteps((currentSteps) =>
+          updateFirstSyncStep(currentSteps, step.key, 'success')
+        )
+
+        await refreshWorkspace()
+      }
+    } finally {
+      setIsFirstSyncPending(false)
     }
   }
 
@@ -232,6 +334,15 @@ export function DashboardPage({
         tone='danger'
         onConfirm={handleDisconnectGithub}
         onCancel={() => setIsDisconnectDialogOpen(false)}
+      />
+      <FirstSyncDialog
+        open={isFirstSyncDialogOpen}
+        steps={firstSyncSteps}
+        hasStarted={hasStartedFirstSync}
+        isPending={isFirstSyncPending}
+        error={firstSyncError}
+        onStart={handleRunFirstSync}
+        onClose={() => setIsFirstSyncDialogOpen(false)}
       />
       <main className='overflow-x-hidden px-4 py-6 text-slate-900 sm:px-6 sm:py-8'>
         <div className='mx-auto grid max-w-6xl min-w-0 gap-6'>
@@ -380,12 +491,51 @@ export function DashboardPage({
   )
 }
 
+function createFirstSyncSteps(): FirstSyncStep[] {
+  return [
+    {
+      key: 'repositories',
+      label: 'Syncing repositories',
+      description:
+        'Pull in the repositories available to this GitHub installation.',
+      status: 'idle',
+    },
+    {
+      key: 'pullRequests',
+      label: 'Syncing pull requests',
+      description:
+        'Fetch open and recent pull request activity for repository metrics.',
+      status: 'idle',
+    },
+    {
+      key: 'workflowRuns',
+      label: 'Syncing pipelines',
+      description:
+        'Bring in workflow run history so pipeline health can be calculated.',
+      status: 'idle',
+    },
+  ]
+}
+
+function updateFirstSyncStep(
+  steps: FirstSyncStep[],
+  key: FirstSyncStep['key'],
+  status: FirstSyncStepStatus
+) {
+  return steps.map((step) => (step.key === key ? { ...step, status } : step))
+}
+
 function getGithubStatusMessage(status: string) {
   switch (status) {
     case 'connected':
       return {
         type: 'success' as const,
         message: 'GitHub connected. Sync repositories to pull in data.',
+      }
+    case 'connected-first':
+      return {
+        type: 'success' as const,
+        message: 'GitHub connected. Run the first sync to unlock your metrics.',
       }
     case 'missing':
       return {
