@@ -347,7 +347,7 @@ export function DashboardPage({
       <main className='overflow-x-hidden px-4 py-6 text-slate-900 sm:px-6 sm:py-8'>
         <div className='mx-auto grid max-w-6xl min-w-0 gap-6'>
           <header>
-            <h1 className='m-0 max-w-full break-words text-3xl font-semibold tracking-tight'>
+            <h1 className='m-0 max-w-full break-words text-3xl font-semibold '>
               {greeting}, {workspace.user.name ?? workspace.user.email}
             </h1>
             <p className='mt-2 text-slate-500'>
@@ -419,12 +419,12 @@ export function DashboardPage({
             </>
           ) : (
             <section className='grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
-              <section className='rounded-2xl h-max border border-dashed border-slate-300 bg-white p-8 sm:p-10'>
+              <section className='rounded-lg h-max border border-dashed border-slate-300 bg-white p-8 sm:p-10'>
                 <div className='max-w-2xl'>
                   <p className='m-0 text-sm font-semibold uppercase text-slate-500'>
                     Connect GitHub To Get Started
                   </p>
-                  <h2 className='mt-3 text-3xl font-semibold tracking-tight text-slate-950'>
+                  <h2 className='mt-3 text-3xl font-semibold  text-slate-950'>
                     Your dashboard comes alive after your first GitHub
                     connection.
                   </h2>

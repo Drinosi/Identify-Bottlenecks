@@ -36,7 +36,7 @@ export function PipelinesPage({ items }: PipelinesPageProps) {
           >
             Back to workspace
           </Link>
-          <h1 className='mt-3 max-w-full break-words text-3xl font-semibold tracking-tight'>
+          <h1 className='mt-3 max-w-full break-words text-3xl font-semibold '>
             Pipeline Runs
           </h1>
           <p className='mt-2 text-slate-500'>
@@ -50,7 +50,7 @@ export function PipelinesPage({ items }: PipelinesPageProps) {
             {groupedItems.map((group) => (
               <section
                 key={group.repositoryId}
-                className='rounded-2xl bg-white p-5 shadow-sm'
+                className='rounded-lg bg-white p-5 shadow-sm'
               >
                 <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
                   <div>
@@ -131,7 +131,7 @@ export function PipelinesPage({ items }: PipelinesPageProps) {
             ))}
           </section>
         ) : (
-          <section className='rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center'>
+          <section className='rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center'>
             <h2 className='m-0 text-xl font-semibold text-slate-950'>
               No pipeline runs have been synced
             </h2>

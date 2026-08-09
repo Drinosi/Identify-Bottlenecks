@@ -57,7 +57,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           >
             Back to workspace
           </Link>
-          <h1 className='mt-3 max-w-full break-words text-3xl font-semibold tracking-tight'>
+          <h1 className='mt-3 max-w-full break-words text-3xl font-semibold '>
             Profile
           </h1>
           <p className='mt-2 text-slate-500'>
@@ -78,7 +78,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         ) : null}
 
         <section className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]'>
-          <section className='rounded-2xl bg-white p-6 shadow-sm'>
+          <section className='rounded-lg bg-white p-6 shadow-sm'>
             <div>
               <h2 className='m-0 text-xl font-semibold'>Account Details</h2>
               <p className='mt-2 text-sm leading-6 text-slate-600'>
@@ -115,7 +115,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           </section>
 
           <aside className='grid gap-6'>
-            <section className='rounded-2xl bg-white p-6 shadow-sm'>
+            <section className='rounded-lg bg-white p-6 shadow-sm'>
               <h2 className='m-0 text-lg font-semibold'>Workspace</h2>
               <dl className='mt-4 grid gap-4 text-sm'>
                 <div>

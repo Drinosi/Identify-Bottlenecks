@@ -22,8 +22,8 @@ export default async function ProtectedAppLayout({
       <div className='border-b border-slate-200 bg-white/90 backdrop-blur'>
         <div className='mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6'>
           <div className='min-w-0'>
-            <Link href='/app' className='text-lg font-semibold tracking-tight'>
-              Identify Bottlenecks
+            <Link href='/app' className='text-lg font-semibold '>
+              Bottlenecks
             </Link>
           </div>
           <div className='flex min-w-0 items-center gap-3'>

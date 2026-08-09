@@ -75,7 +75,7 @@ export function RepositoryDetailPage({ detail }: RepositoryDetailPageProps) {
           >
             Back to workspace
           </Link>
-          <h1 className='mt-3 max-w-full break-words text-3xl font-semibold tracking-tight'>
+          <h1 className='mt-3 max-w-full break-words text-3xl font-semibold '>
             {repository.full_name}
           </h1>
           <div className='mt-3 flex flex-wrap items-center gap-2 text-sm'>

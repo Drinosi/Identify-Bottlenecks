@@ -71,12 +71,12 @@ export function FirstSyncDialog({
       >
         <div className='flex items-start justify-between gap-4'>
           <div>
-            <p className='m-0 text-sm font-semibold tracking-[0.18em] text-slate-400 uppercase'>
+            <p className='m-0 text-sm font-semibold  text-slate-400 uppercase'>
               GitHub Connected
             </p>
             <h2
               id='first-sync-dialog-title'
-              className='mt-3 text-2xl font-semibold tracking-tight text-slate-950'
+              className='mt-3 text-2xl font-semibold  text-slate-950'
             >
               Sync once to unlock your metrics
             </h2>
@@ -96,7 +96,7 @@ export function FirstSyncDialog({
           {steps.map((step, index) => (
             <div
               key={step.key}
-              className={`flex items-start gap-4 rounded-2xl border px-4 py-4 transition ${
+              className={`flex items-start gap-4 rounded-lg border px-4 py-4 transition ${
                 step.status === 'success'
                   ? 'border-emerald-200 bg-emerald-50'
                   : step.status === 'loading'
@@ -107,7 +107,7 @@ export function FirstSyncDialog({
               }`}
             >
               <div
-                className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold ${
+                className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${
                   step.status === 'success'
                     ? 'bg-emerald-600 text-white'
                     : step.status === 'loading'
@@ -159,7 +159,7 @@ export function FirstSyncDialog({
         </div>
 
         {error ? (
-          <p className='mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
+          <p className='mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
             {error}
           </p>
         ) : null}
