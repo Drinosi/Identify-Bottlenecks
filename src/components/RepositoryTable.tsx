@@ -1,10 +1,9 @@
-import Link from 'next/link'
 import { FaGithubSquare } from 'react-icons/fa'
 import { FaArrowsRotate } from 'react-icons/fa6'
 import { HiChevronDown } from 'react-icons/hi'
 import { EmptyState } from '@/components/EmptyState'
-import { formatSyncTime } from '@/components/dashboardUtils'
 import type { Repository } from '@/components/dashboardTypes'
+import RepositorySearch from '@/components/RepositorySearch'
 
 type RepositoryTableProps = {
   repositories: Repository[]
@@ -46,6 +45,7 @@ export function RepositoryTable({
             All repositories accessible through your GitHub installation.
           </p>
         </div>
+
         {canManageIntegrations ? (
           <details className='group relative w-[170px]'>
             <summary className='flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-black bg-white px-4 py-2 text-sm font-medium transition hover:bg-slate-50'>
@@ -106,129 +106,15 @@ export function RepositoryTable({
       </div>
 
       {repositories.length ? (
-        <div className='overflow-x-auto rounded-lg border border-slate-200'>
-          <table className='w-full min-w-[640px] border-collapse text-left text-sm'>
-            <thead className='bg-slate-50 text-slate-500'>
-              <tr>
-                <th className='px-4 py-3 font-medium'>Repository</th>
-                <th className='px-4 py-3 font-medium'>Default branch</th>
-                <th className='px-4 py-3 font-medium'>Visibility</th>
-                <th className='px-4 py-3 font-medium'>Actions</th>
-              </tr>
-            </thead>
-            <tbody className='divide-y divide-slate-200'>
-              {repositories.map((repository) => (
-                <tr key={repository.id}>
-                  <td className='px-4 py-3'>
-                    <Link
-                      href={`/app/repositories/${encodeURIComponent(repository.owner)}/${encodeURIComponent(repository.name)}`}
-                      className='font-medium text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:decoration-slate-900'
-                    >
-                      {repository.full_name}
-                    </Link>
-                    <p className='m-0 mt-1 text-xs'>
-                      <a
-                        href={`https://github.com/${repository.owner}/${repository.name}`}
-                        target='_blank'
-                        rel='noreferrer'
-                        className='text-slate-600 underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900 hover:decoration-slate-900'
-                      >
-                        Open on GitHub
-                      </a>
-                    </p>
-                    <p className='m-0 text-xs text-slate-500'>
-                      PRs{' '}
-                      {formatSyncTime(repository.last_pull_request_synced_at)}
-                    </p>
-                    <p className='m-0 text-xs text-slate-500'>
-                      Pipelines{' '}
-                      {formatSyncTime(repository.last_workflow_run_synced_at)}
-                    </p>
-                    {repository.pull_request_sync_error ? (
-                      <p className='m-0 mt-1 text-xs text-red-700'>
-                        {repository.pull_request_sync_error}
-                      </p>
-                    ) : null}
-                    {repository.workflow_run_sync_error ? (
-                      <p className='m-0 mt-1 text-xs text-red-700'>
-                        {repository.workflow_run_sync_error}
-                      </p>
-                    ) : null}
-                  </td>
-                  <td className='px-4 py-3 font-mono text-xs text-slate-700'>
-                    <span className='rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-700'>
-                      {repository.default_branch}
-                    </span>
-                  </td>
-                  <td className='px-4 py-3 text-slate-700'>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        repository.private
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-emerald-50 text-emerald-700'
-                      }`}
-                    >
-                      {repository.private ? 'Private' : 'Public'}
-                    </span>
-                  </td>
-                  <td className='px-4 py-3'>
-                    <details className='group relative w-[140px]'>
-                      <summary className='flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-black bg-white px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-slate-50'>
-                        <span className='inline-flex items-center gap-2'>
-                          <FaArrowsRotate />
-                          Sync
-                        </span>
-                        <HiChevronDown className='text-base transition group-open:rotate-180' />
-                      </summary>
-                      <div className='absolute right-0 z-10 mt-2 grid min-w-full gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-lg'>
-                        {repository.pull_request_sync_status === 'failed' ||
-                        repository.workflow_run_sync_status === 'failed' ? (
-                          <p className='m-0 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700'>
-                            Last sync failed
-                          </p>
-                        ) : null}
-                        <button
-                          type='button'
-                          onClick={() => onSyncPullRequests(repository.id)}
-                          disabled={
-                            syncingPullRequestRepositoryId === repository.id ||
-                            repository.pull_request_sync_status === 'syncing'
-                          }
-                          className='inline-flex cursor-pointer items-center justify-between gap-3 rounded-lg text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
-                        >
-                          <span>Pull requests</span>
-                          <span className='text-xs text-slate-500'>
-                            {syncingPullRequestRepositoryId === repository.id ||
-                            repository.pull_request_sync_status === 'syncing'
-                              ? 'Syncing...'
-                              : 'Run'}
-                          </span>
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => onSyncWorkflowRuns(repository.id)}
-                          disabled={
-                            syncingWorkflowRunRepositoryId === repository.id ||
-                            repository.workflow_run_sync_status === 'syncing'
-                          }
-                          className='inline-flex cursor-pointer items-center justify-between gap-3 rounded-lg text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
-                        >
-                          <span>Pipelines</span>
-                          <span className='text-xs text-slate-500'>
-                            {syncingWorkflowRunRepositoryId === repository.id ||
-                            repository.workflow_run_sync_status === 'syncing'
-                              ? 'Syncing...'
-                              : 'Run'}
-                          </span>
-                        </button>
-                      </div>
-                    </details>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <RepositorySearch
+            onSyncPullRequests={onSyncPullRequests}
+            onSyncWorkflowRuns={onSyncWorkflowRuns}
+            syncingPullRequestRepositoryId={syncingPullRequestRepositoryId}
+            syncingWorkflowRunRepositoryId={syncingWorkflowRunRepositoryId}
+            repositories={repositories}
+          />
+        </>
       ) : (
         <EmptyState
           title='No repositories synced'
