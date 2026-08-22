@@ -25,11 +25,9 @@ export function AuthPage({ mode, inviteToken }: AuthPageProps) {
 
   return (
     <main className='grid min-h-screen place-items-center px-6 py-12'>
-      <section className='grid w-full max-w-md gap-4 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm'>
-        <p className='m-0 text-sm font-semibold text-slate-600'>
-          Identify Bottlenecks
-        </p>
-        <h1 className='m-0 text-3xl font-semibold tracking-tight text-slate-900'>
+      <section className='grid w-full max-w-md gap-4 rounded-lg border border-slate-200 bg-white p-8 shadow-sm'>
+        <p className='m-0 text-sm font-semibold text-slate-600'>Bottlenecks</p>
+        <h1 className='m-0 text-3xl font-semibold  text-slate-900'>
           {mode === 'sign-in' ? 'Sign in' : 'Create your account'}
         </h1>
         <p className='m-0 text-base leading-7 text-slate-600'>

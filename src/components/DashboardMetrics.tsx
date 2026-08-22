@@ -6,50 +6,50 @@ import { formatReviewTime } from '@/components/dashboardUtils'
 import { formatPercentDelta } from '@/components/dashboardUtils'
 import { evaluateMetricStatus } from '@/lib/evaluateMetricStatus'
 import { evaluateMetricDeltaStatus } from '@/lib/evaluateMetricDeltaStatus'
-import { defaultMetricThresholds } from '@/lib/defaultMetricThresholds'
 import type { Workspace } from '@/components/dashboardTypes'
 
 type DashboardMetricsProps = {
   github: Workspace['github'] | undefined
+  thresholds: Workspace['metricThresholds']
 }
 
-export function DashboardMetrics({ github }: DashboardMetricsProps) {
+export function DashboardMetrics({
+  github,
+  thresholds,
+}: DashboardMetricsProps) {
   const firstReviewStatus = evaluateMetricStatus({
     value: github?.pullRequests.averageHoursToFirstReview,
-    warning: defaultMetricThresholds.pullRequest.firstReview.warningHours,
-    critical: defaultMetricThresholds.pullRequest.firstReview.criticalHours,
+    warning: thresholds.pullRequest.firstReview.warningHours,
+    critical: thresholds.pullRequest.firstReview.criticalHours,
   })
   const waitingReviewStatus = evaluateMetricStatus({
     value:
       (github?.pullRequests.waitingForReview ?? 0) > 0
         ? github?.pullRequests.oldestWaitingReviewHours
         : 0,
-    warning: defaultMetricThresholds.pullRequest.openWithoutReview.warningHours,
-    critical:
-      defaultMetricThresholds.pullRequest.openWithoutReview.criticalHours,
+    warning: thresholds.pullRequest.openWithoutReview.warningHours,
+    critical: thresholds.pullRequest.openWithoutReview.criticalHours,
   })
   const reviewedButUnmergedStatus = evaluateMetricStatus({
     value:
       (github?.pullRequests.reviewedButUnmerged ?? 0) > 0
         ? github?.pullRequests.oldestReviewedButUnmergedHours
         : 0,
-    warning:
-      defaultMetricThresholds.pullRequest.reviewedButUnmerged.warningHours,
-    critical:
-      defaultMetricThresholds.pullRequest.reviewedButUnmerged.criticalHours,
+    warning: thresholds.pullRequest.reviewedButUnmerged.warningHours,
+    critical: thresholds.pullRequest.reviewedButUnmerged.criticalHours,
   })
   const mergeTimeStatus = evaluateMetricStatus({
     value: github?.pullRequests.averageHoursToMerge,
-    warning: defaultMetricThresholds.pullRequest.mergeTime.warningHours,
-    critical: defaultMetricThresholds.pullRequest.mergeTime.criticalHours,
+    warning: thresholds.pullRequest.mergeTime.warningHours,
+    critical: thresholds.pullRequest.mergeTime.criticalHours,
   })
   const mergeToPipelineStatus = evaluateMetricDeltaStatus({
     current: github?.pipeline.medianHoursMergeToPipeline,
     baseline: github?.pipeline.baselineMedianHoursMergeToPipeline,
     warningPercentIncrease:
-      defaultMetricThresholds.delivery.mergeToPipelineIncrease.warningPercent,
+      thresholds.delivery.mergeToPipelineIncrease.warningPercent,
     criticalPercentIncrease:
-      defaultMetricThresholds.delivery.mergeToPipelineIncrease.criticalPercent,
+      thresholds.delivery.mergeToPipelineIncrease.criticalPercent,
   })
 
   return (

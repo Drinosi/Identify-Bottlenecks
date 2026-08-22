@@ -1,4 +1,8 @@
 import { db } from '@/lib/db'
+import {
+  resolveMetricThresholds,
+  type MetricThresholdOverrides,
+} from '@/lib/metricThresholds'
 
 type WorkspaceUser = {
   id: string
@@ -31,6 +35,7 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
     return {
       user,
       organization: null,
+      metricThresholds: resolveMetricThresholds(),
       members: [],
       invitations: [],
       github: {
@@ -62,6 +67,19 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
       },
     }
   }
+
+  const thresholdResult = await db.query(
+    `
+    SELECT *
+    FROM organization_metric_thresholds
+    WHERE organization_id = $1
+    LIMIT 1
+    `,
+    [organization.id]
+  )
+  const metricThresholds = resolveMetricThresholds(
+    thresholdResult.rows[0] as MetricThresholdOverrides | undefined
+  )
 
   const baseUrl = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'
 
@@ -358,6 +376,7 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
   return {
     user,
     organization,
+    metricThresholds,
     members: membersResult.rows,
     invitations: invitationsResult.rows.map((invite) => ({
       ...invite,
