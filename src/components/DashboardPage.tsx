@@ -265,6 +265,12 @@ export function DashboardPage({
     }
   }
 
+  async function handleSyncAll() {
+    await handleSyncRepositories()
+    await handleSyncPullRequests()
+    await handleSyncWorkflowRuns()
+  }
+
   async function handleRunFirstSync() {
     setGithubError(null)
     setGithubSyncMessage(null)
@@ -363,7 +369,10 @@ export function DashboardPage({
 
           {github?.connected ? (
             <>
-              <DashboardMetrics github={github} />
+              <DashboardMetrics
+                github={github}
+                thresholds={workspace.metricThresholds}
+              />
 
               {organization ? (
                 <OrganizationMembersPanel
@@ -391,6 +400,7 @@ export function DashboardPage({
                   onSyncRepositories={handleSyncRepositories}
                   onSyncPullRequests={handleSyncPullRequests}
                   onSyncWorkflowRuns={handleSyncWorkflowRuns}
+                  onSyncAll={handleSyncAll}
                 />
 
                 <aside className='grid h-max gap-6'>

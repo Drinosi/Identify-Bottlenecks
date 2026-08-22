@@ -1,3 +1,5 @@
+import type { MetricThresholds } from '@/lib/metricThresholds'
+
 export type Workspace = {
   user: {
     id: string
@@ -11,6 +13,7 @@ export type Workspace = {
     created_at: string
     role: string
   } | null
+  metricThresholds: MetricThresholds
   members: OrganizationMember[]
   invitations: OrganizationInvitation[]
   github: {

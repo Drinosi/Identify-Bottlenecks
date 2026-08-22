@@ -18,6 +18,7 @@ type RepositoryTableProps = {
   onSyncRepositories: () => void
   onSyncPullRequests: (repositoryId?: string) => void
   onSyncWorkflowRuns: (repositoryId?: string) => void
+  onSyncAll?: () => void
 }
 
 export function RepositoryTable({
@@ -32,6 +33,7 @@ export function RepositoryTable({
   onSyncRepositories,
   onSyncPullRequests,
   onSyncWorkflowRuns,
+  onSyncAll,
 }: RepositoryTableProps) {
   return (
     <div className='min-w-0 rounded-lg bg-white p-4 sm:p-6'>
@@ -54,6 +56,17 @@ export function RepositoryTable({
               <HiChevronDown className='text-lg transition group-open:rotate-180' />
             </summary>
             <div className='absolute right-0 z-10 mt-2 grid min-w-full gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-lg'>
+              <button
+                type='button'
+                onClick={onSyncAll}
+                disabled={isGithubSyncPending || !isGithubConnected}
+                className='inline-flex cursor-pointer items-center justify-between gap-3 rounded-lg text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
+              >
+                <span>Sync All</span>
+                <span className='text-xs text-slate-500'>
+                  {isGithubSyncPending ? 'Syncing...' : 'Run'}
+                </span>
+              </button>
               <button
                 type='button'
                 onClick={onSyncRepositories}
