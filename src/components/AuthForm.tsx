@@ -96,17 +96,9 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
           return
         }
 
-        const finalizeResponse = await fetch('/api/sign-up-intent/finalize', {
-          method: 'POST',
-        })
-        const finalizeData = await finalizeResponse.json().catch(() => null)
-
-        if (!finalizeResponse.ok) {
-          setError(finalizeData?.error ?? 'Unable to finish account setup.')
-          return
-        }
-
-        router.push('/app')
+        router.push(
+          `/check-email?email=${encodeURIComponent(email)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ''}`
+        )
         router.refresh()
         return
       } else {
@@ -118,6 +110,14 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
         })
 
         if (result.error) {
+          if (isEmailNotVerifiedError(result.error)) {
+            router.push(
+              `/check-email?email=${encodeURIComponent(email)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ''}`
+            )
+            router.refresh()
+            return
+          }
+
           setError(result.error.message ?? 'Invalid email or password.')
           return
         }
@@ -248,6 +248,13 @@ function validateAuthForm({
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+function isEmailNotVerifiedError(error: { code?: string; message?: string }) {
+  return (
+    error.code === 'EMAIL_NOT_VERIFIED' ||
+    error.message?.toLowerCase().includes('email not verified') === true
+  )
 }
 
 function getPasswordErrors(value: string) {
