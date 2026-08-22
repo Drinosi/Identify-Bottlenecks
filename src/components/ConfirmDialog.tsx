@@ -53,7 +53,7 @@ export function ConfirmDialog({
         role='dialog'
         aria-modal='true'
         aria-labelledby='confirm-dialog-title'
-        className='w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl'
+        className='w-full max-w-md rounded-lg bg-white p-6 shadow-2xl'
         onClick={(event) => event.stopPropagation()}
       >
         <h2

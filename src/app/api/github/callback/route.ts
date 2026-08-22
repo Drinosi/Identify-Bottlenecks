@@ -56,6 +56,17 @@ export async function GET(request: Request) {
     )
   }
 
+  const existingInstallationResult = await db.query(
+    `
+    SELECT 1
+    FROM github_installations
+    WHERE organization_id = $1
+    LIMIT 1
+    `,
+    [installState.organization_id]
+  )
+  const isFirstConnection = existingInstallationResult.rowCount === 0
+
   await db.query(
     `
     INSERT INTO github_installations (
@@ -84,5 +95,12 @@ export async function GET(request: Request) {
     [state]
   )
 
-  return NextResponse.redirect(new URL('/app?github=connected', request.url))
+  return NextResponse.redirect(
+    new URL(
+      isFirstConnection
+        ? '/app?github=connected-first'
+        : '/app?github=connected',
+      request.url
+    )
+  )
 }

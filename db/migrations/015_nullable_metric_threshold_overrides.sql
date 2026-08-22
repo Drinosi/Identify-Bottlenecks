@@ -1,0 +1,15 @@
+ALTER TABLE organization_metric_thresholds
+    ALTER COLUMN first_review_warning_hours DROP NOT NULL,
+    ALTER COLUMN first_review_critical_hours DROP NOT NULL,
+    ALTER COLUMN merge_time_warning_hours DROP NOT NULL,
+    ALTER COLUMN merge_time_critical_hours DROP NOT NULL,
+    ALTER COLUMN open_without_review_warning_hours DROP NOT NULL,
+    ALTER COLUMN open_without_review_critical_hours DROP NOT NULL,
+    ALTER COLUMN reviewed_but_unmerged_warning_hours DROP NOT NULL,
+    ALTER COLUMN reviewed_but_unmerged_critical_hours DROP NOT NULL,
+    ALTER COLUMN default_branch_activity_warning_hours DROP NOT NULL,
+    ALTER COLUMN default_branch_activity_critical_hours DROP NOT NULL,
+    ALTER COLUMN change_lead_time_warning_hours DROP NOT NULL,
+    ALTER COLUMN change_lead_time_critical_hours DROP NOT NULL,
+    ALTER COLUMN merge_to_pipeline_increase_warning_percent DROP NOT NULL,
+    ALTER COLUMN merge_to_pipeline_increase_critical_percent DROP NOT NULL;

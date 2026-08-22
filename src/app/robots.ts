@@ -1,0 +1,24 @@
+import type { MetadataRoute } from 'next'
+import { siteConfig } from '@/lib/site'
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: [
+        '/api/',
+        '/app',
+        '/app/',
+        '/admin',
+        '/admin/',
+        '/check-email',
+        '/join',
+        '/sign-in',
+        '/sign-up',
+      ],
+    },
+    sitemap: `${siteConfig.url}/sitemap.xml`,
+    host: siteConfig.url,
+  }
+}
