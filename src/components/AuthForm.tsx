@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
@@ -199,6 +200,15 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
           </span>
         ) : null}
       </label>
+
+      {mode === 'sign-in' ? (
+        <Link
+          href='/forgot-password'
+          className='w-fit text-sm font-medium text-slate-700 underline transition hover:text-slate-950'
+        >
+          Forgot password?
+        </Link>
+      ) : null}
 
       {error ? <p className='m-0 text-sm text-red-700'>{error}</p> : null}
 
