@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
@@ -96,17 +97,9 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
           return
         }
 
-        const finalizeResponse = await fetch('/api/sign-up-intent/finalize', {
-          method: 'POST',
-        })
-        const finalizeData = await finalizeResponse.json().catch(() => null)
-
-        if (!finalizeResponse.ok) {
-          setError(finalizeData?.error ?? 'Unable to finish account setup.')
-          return
-        }
-
-        router.push('/app')
+        router.push(
+          `/check-email?email=${encodeURIComponent(email)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ''}`
+        )
         router.refresh()
         return
       } else {
@@ -118,6 +111,14 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
         })
 
         if (result.error) {
+          if (isEmailNotVerifiedError(result.error)) {
+            router.push(
+              `/check-email?email=${encodeURIComponent(email)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ''}`
+            )
+            router.refresh()
+            return
+          }
+
           setError(result.error.message ?? 'Invalid email or password.')
           return
         }
@@ -200,6 +201,15 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
         ) : null}
       </label>
 
+      {mode === 'sign-in' ? (
+        <Link
+          href='/forgot-password'
+          className='w-fit text-sm font-medium text-slate-700 underline transition hover:text-slate-950'
+        >
+          Forgot password?
+        </Link>
+      ) : null}
+
       {error ? <p className='m-0 text-sm text-red-700'>{error}</p> : null}
 
       <button
@@ -248,6 +258,13 @@ function validateAuthForm({
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+function isEmailNotVerifiedError(error: { code?: string; message?: string }) {
+  return (
+    error.code === 'EMAIL_NOT_VERIFIED' ||
+    error.message?.toLowerCase().includes('email not verified') === true
+  )
 }
 
 function getPasswordErrors(value: string) {
