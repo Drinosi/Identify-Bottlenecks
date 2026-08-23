@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Repository } from './dashboardTypes'
 import Link from 'next/link'
 import { formatSyncTime } from '@/components/dashboardUtils'
@@ -22,25 +22,61 @@ export default function RepositorySearch({
   repositories: Repository[]
   syncingPullRequestRepositoryId: string | null
   syncingWorkflowRunRepositoryId: string | null
-  onSyncPullRequests: () => void
-  onSyncWorkflowRuns: () => void
+  onSyncPullRequests: (repositoryId: string) => void
+  onSyncWorkflowRuns: (repositoryId: string) => void
 }) {
-  const [repositoriesToShow, setRepositoriesToShow] =
-    useState<Repository[]>(repositories)
   const [query, setQuery] = useState('')
 
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
+  const sortBy = searchParams.get('sortBy')
 
   const [sortByToggle, setSortByToggle] = useState(false)
 
+  const repositoriesToShow = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    const nextRepositories = repositories.filter((repository) =>
+      repository.full_name.toLowerCase().includes(normalizedQuery)
+    )
+
+    switch (sortBy) {
+      case 'name-desc':
+        return nextRepositories.sort((a, b) =>
+          b.full_name.localeCompare(a.full_name)
+        )
+      case 'least-recently-synced':
+        return nextRepositories.sort((a, b) => {
+          const aSyncTime = new Date(
+            a.last_workflow_run_synced_at || 0
+          ).getTime()
+          const bSyncTime = new Date(
+            b.last_workflow_run_synced_at || 0
+          ).getTime()
+
+          return aSyncTime - bSyncTime
+        })
+      case 'most-recently-synced':
+        return nextRepositories.sort((a, b) => {
+          const aSyncTime = new Date(
+            a.last_workflow_run_synced_at || 0
+          ).getTime()
+          const bSyncTime = new Date(
+            b.last_workflow_run_synced_at || 0
+          ).getTime()
+
+          return bSyncTime - aSyncTime
+        })
+      case 'name-asc':
+      default:
+        return nextRepositories.sort((a, b) =>
+          a.full_name.localeCompare(b.full_name)
+        )
+    }
+  }, [query, repositories, sortBy])
+
   function handleSearch(query: string) {
     setQuery(query)
-    const filteredRepositories = repositories.filter((repository) =>
-      repository.full_name.toLowerCase().includes(query.toLowerCase())
-    )
-    setRepositoriesToShow(filteredRepositories)
   }
 
   function handleSort(sortBy: string) {
@@ -57,52 +93,6 @@ export default function RepositorySearch({
     })
   }
 
-  useEffect(() => {
-    switch (searchParams.get('sortBy')) {
-      case 'name-asc':
-        setRepositoriesToShow(
-          [...repositoriesToShow].sort((a, b) =>
-            a.full_name.localeCompare(b.full_name)
-          )
-        )
-        break
-      case 'name-desc':
-        setRepositoriesToShow(
-          [...repositoriesToShow].sort((a, b) =>
-            b.full_name.localeCompare(a.full_name)
-          )
-        )
-        break
-      case 'least-recently-synced':
-        setRepositoriesToShow(
-          [...repositoriesToShow].sort((a, b) => {
-            const aSyncTime = new Date(
-              a.last_workflow_run_synced_at || 0
-            ).getTime()
-            const bSyncTime = new Date(
-              b.last_workflow_run_synced_at || 0
-            ).getTime()
-            return aSyncTime - bSyncTime
-          })
-        )
-        break
-      case 'most-recently-synced':
-        setRepositoriesToShow(
-          [...repositoriesToShow].sort((a, b) => {
-            const aSyncTime = new Date(
-              a.last_workflow_run_synced_at || 0
-            ).getTime()
-            const bSyncTime = new Date(
-              b.last_workflow_run_synced_at || 0
-            ).getTime()
-            return bSyncTime - aSyncTime
-          })
-        )
-        break
-      default:
-        setRepositoriesToShow(repositoriesToShow)
-    }
-  }, [searchParams])
   return (
     <div>
       <div className='relative mb-4 grid grid-cols-[1fr_auto] items-center'>
