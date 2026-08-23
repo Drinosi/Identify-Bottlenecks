@@ -1,12 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Repository } from './dashboardTypes'
 import Link from 'next/link'
 import { formatSyncTime } from '@/components/dashboardUtils'
 import { HiChevronDown } from 'react-icons/hi'
+import { TiArrowSortedDown } from 'react-icons/ti'
 
 import { FaArrowsRotate } from 'react-icons/fa6'
+
+import { useSearchParams } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 export default function RepositorySearch({
   repositories,
@@ -25,6 +29,12 @@ export default function RepositorySearch({
     useState<Repository[]>(repositories)
   const [query, setQuery] = useState('')
 
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const [sortByToggle, setSortByToggle] = useState(false)
+
   function handleSearch(query: string) {
     setQuery(query)
     const filteredRepositories = repositories.filter((repository) =>
@@ -33,15 +43,116 @@ export default function RepositorySearch({
     setRepositoriesToShow(filteredRepositories)
   }
 
+  function handleSort(sortBy: string) {
+    setSortByToggle(false)
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('sortBy')
+
+    params.set('sortBy', sortBy)
+
+    const queryString = params.toString()
+
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    })
+  }
+
+  useEffect(() => {
+    switch (searchParams.get('sortBy')) {
+      case 'name-asc':
+        setRepositoriesToShow(
+          [...repositoriesToShow].sort((a, b) =>
+            a.full_name.localeCompare(b.full_name)
+          )
+        )
+        break
+      case 'name-desc':
+        setRepositoriesToShow(
+          [...repositoriesToShow].sort((a, b) =>
+            b.full_name.localeCompare(a.full_name)
+          )
+        )
+        break
+      case 'least-recently-synced':
+        setRepositoriesToShow(
+          [...repositoriesToShow].sort((a, b) => {
+            const aSyncTime = new Date(
+              a.last_workflow_run_synced_at || 0
+            ).getTime()
+            const bSyncTime = new Date(
+              b.last_workflow_run_synced_at || 0
+            ).getTime()
+            return aSyncTime - bSyncTime
+          })
+        )
+        break
+      case 'most-recently-synced':
+        setRepositoriesToShow(
+          [...repositoriesToShow].sort((a, b) => {
+            const aSyncTime = new Date(
+              a.last_workflow_run_synced_at || 0
+            ).getTime()
+            const bSyncTime = new Date(
+              b.last_workflow_run_synced_at || 0
+            ).getTime()
+            return bSyncTime - aSyncTime
+          })
+        )
+        break
+      default:
+        setRepositoriesToShow(repositoriesToShow)
+    }
+  }, [searchParams])
   return (
     <div>
-      <input
-        type='text'
-        value={query}
-        onChange={(e) => handleSearch(e.target.value)}
-        placeholder='Search repositories...'
-        className='border mb-4 border-slate-300 bg-white p-3 w-full rounded-lg placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500'
-      />
+      <div className='relative mb-4 grid grid-cols-[1fr_auto] items-center'>
+        <input
+          type='text'
+          value={query}
+          onChange={(e) => handleSearch(e.target.value)}
+          placeholder='Search repositories...'
+          className='border border-slate-300 bg-white p-3 w-full rounded-lg placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500'
+        />
+        <div>
+          <button
+            className='ml-2  group flex gap-2 cursor-pointer items-center border border-slate-200 h-full justify-center rounded-lg text-sm bg-slate-200 p-3 text-slate-700 hover:bg-slate-300'
+            onClick={() => setSortByToggle((prev) => !prev)}
+          >
+            Sort By
+            <TiArrowSortedDown />
+          </button>
+          <div
+            className={`${sortByToggle ? 'grid' : 'hidden'} absolute right-0 z-10 mt-2 min-w-[150px] gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-lg`}
+          >
+            <ul>
+              <li
+                className='p-2 hover:bg-slate-100 rounded cursor-pointer'
+                onClick={() => handleSort('name-asc')}
+              >
+                <button>Name: A–Z</button>{' '}
+              </li>
+              <li
+                className='p-2 hover:bg-slate-100 rounded cursor-pointer'
+                onClick={() => handleSort('name-desc')}
+              >
+                <button>Name: Z–A</button>
+              </li>
+              <li
+                className='p-2 hover:bg-slate-100 rounded cursor-pointer'
+                onClick={() => handleSort('least-recently-synced')}
+              >
+                <button>Least recently synced</button>
+              </li>
+              <li
+                className='p-2 hover:bg-slate-100 rounded cursor-pointer'
+                onClick={() => handleSort('most-recently-synced')}
+              >
+                <button>Most recently synced</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
       <div className='overflow-x-auto rounded-lg border border-slate-200'>
         <table className='w-full min-w-[640px] border-collapse text-left text-sm'>
           <thead className='bg-slate-50 text-slate-500'>
