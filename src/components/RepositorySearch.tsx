@@ -101,7 +101,7 @@ export default function RepositorySearch({
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder='Search repositories...'
-          className='border border-slate-300 bg-white p-3 w-full rounded-lg placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500'
+          className='w-full rounded-lg border border-slate-300 bg-white p-3 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-300'
         />
         <div>
           <button

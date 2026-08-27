@@ -18,11 +18,17 @@ export default async function ProtectedAppLayout({
   }
 
   return (
-    <div className='min-h-screen bg-slate-50 text-slate-900'>
-      <div className='border-b border-slate-200 bg-white/90 backdrop-blur'>
+    <div className='min-h-screen bg-parchment text-slate-900'>
+      <div className='border-b border-brand-200 bg-white/90 backdrop-blur'>
         <div className='mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6'>
           <div className='min-w-0'>
-            <Link href='/app' className='text-lg font-semibold '>
+            <Link
+              href='/app'
+              className='flex items-center gap-2.5 text-lg font-semibold text-brand-800'
+            >
+              <span className='flex size-8 items-center justify-center rounded-lg bg-brand-700 text-xs font-bold text-white shadow-sm'>
+                B
+              </span>
               Bottlenecks
             </Link>
           </div>
@@ -37,13 +43,13 @@ export default async function ProtectedAppLayout({
             </div>
             <Link
               href='/app/organization'
-              className='inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 transition hover:bg-slate-50'
+              className='inline-flex items-center justify-center rounded-full border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-medium text-brand-800 transition hover:border-brand-300 hover:bg-brand-100'
             >
               Organization
             </Link>
             <Link
               href='/app/profile'
-              className='inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 transition hover:bg-slate-50'
+              className='inline-flex items-center justify-center rounded-full border border-brand-200 bg-white px-4 py-2.5 text-sm font-medium text-brand-800 transition hover:border-brand-300 hover:bg-brand-50'
             >
               Profile
             </Link>

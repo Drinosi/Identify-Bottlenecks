@@ -1,16 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { DashboardMetrics } from '@/components/DashboardMetrics'
 import {
   FirstSyncDialog,
   type FirstSyncStep,
   type FirstSyncStepStatus,
 } from '@/components/FirstSyncDialog'
-import { GitHubPanel } from '@/components/GithubPanel'
-import { OrganizationMembersPanel } from '@/components/OrganizationMembersPanel'
 import { RepositoryTable } from '@/components/RepositoryTable'
 import type { Workspace } from '@/components/dashboardTypes'
 
@@ -39,13 +37,6 @@ export function DashboardPage({
       ? initialGithubStatusMessage.message
       : null
   )
-  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false)
-  const [githubDisconnectUrl, setGithubDisconnectUrl] = useState<string | null>(
-    null
-  )
-  const [isGithubPending, setIsGithubPending] = useState(false)
-  const [isDisconnectGithubPending, setIsDisconnectGithubPending] =
-    useState(false)
   const [isGithubSyncPending, setIsGithubSyncPending] = useState(false)
   const [isPullRequestSyncPending, setIsPullRequestSyncPending] =
     useState(false)
@@ -68,9 +59,6 @@ export function DashboardPage({
   const organization = workspace.organization
   const github = workspace.github
   const greeting = getGreeting()
-
-  const canManageIntegrations =
-    organization?.role === 'owner' || organization?.role === 'admin'
 
   useEffect(() => {
     if (initialGithubStatus) {
@@ -143,27 +131,6 @@ export function DashboardPage({
     return true
   }
 
-  async function handleConnectGithub() {
-    setGithubError(null)
-    setGithubSyncMessage(null)
-    setGithubDisconnectUrl(null)
-    setIsGithubPending(true)
-
-    try {
-      const response = await fetch('/api/github/install-url')
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok) {
-        setGithubError(data?.error ?? 'Unable to start GitHub connection.')
-        return
-      }
-
-      window.location.href = data.url
-    } finally {
-      setIsGithubPending(false)
-    }
-  }
-
   async function handleSyncRepositories() {
     setGithubError(null)
     setGithubSyncMessage(null)
@@ -183,36 +150,9 @@ export function DashboardPage({
     }
   }
 
-  async function handleDisconnectGithub() {
-    setIsDisconnectDialogOpen(false)
-    setGithubError(null)
-    setGithubSyncMessage(null)
-    setGithubDisconnectUrl(null)
-    setIsDisconnectGithubPending(true)
-
-    try {
-      const response = await fetch('/api/github/connection', {
-        method: 'DELETE',
-      })
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok) {
-        setGithubError(data?.error ?? 'Unable to disconnect GitHub.')
-        return
-      }
-
-      setGithubSyncMessage('Disconnected GitHub.')
-      setGithubDisconnectUrl(data?.uninstallUrl ?? null)
-      await refreshWorkspace()
-    } finally {
-      setIsDisconnectGithubPending(false)
-    }
-  }
-
   async function handleSyncPullRequests(repositoryId?: string) {
     setGithubError(null)
     setGithubSyncMessage(null)
-    setGithubDisconnectUrl(null)
 
     if (repositoryId) {
       setSyncingPullRequestRepositoryId(repositoryId)
@@ -240,7 +180,6 @@ export function DashboardPage({
   async function handleSyncWorkflowRuns(repositoryId?: string) {
     setGithubError(null)
     setGithubSyncMessage(null)
-    setGithubDisconnectUrl(null)
 
     if (repositoryId) {
       setSyncingWorkflowRunRepositoryId(repositoryId)
@@ -274,7 +213,6 @@ export function DashboardPage({
   async function handleRunFirstSync() {
     setGithubError(null)
     setGithubSyncMessage(null)
-    setGithubDisconnectUrl(null)
     setFirstSyncError(null)
     setHasStartedFirstSync(true)
     setIsFirstSyncPending(true)
@@ -331,16 +269,6 @@ export function DashboardPage({
 
   return (
     <>
-      <ConfirmDialog
-        open={isDisconnectDialogOpen}
-        title='Disconnect GitHub?'
-        description='This removes the GitHub connection for this organization and clears synced repositories, pull requests, and pipeline data from the app.'
-        confirmLabel='Disconnect GitHub'
-        isPending={isDisconnectGithubPending}
-        tone='danger'
-        onConfirm={handleDisconnectGithub}
-        onCancel={() => setIsDisconnectDialogOpen(false)}
-      />
       <FirstSyncDialog
         open={isFirstSyncDialogOpen}
         steps={firstSyncSteps}
@@ -367,6 +295,18 @@ export function DashboardPage({
             </section>
           ) : null}
 
+          {githubSyncMessage ? (
+            <section className='rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800'>
+              {githubSyncMessage}
+            </section>
+          ) : null}
+
+          {githubError ? (
+            <section className='rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800'>
+              {githubError}
+            </section>
+          ) : null}
+
           {github?.connected ? (
             <>
               <DashboardMetrics
@@ -374,20 +314,14 @@ export function DashboardPage({
                 thresholds={workspace.metricThresholds}
               />
 
-              {organization ? (
-                <OrganizationMembersPanel
-                  organization={organization}
-                  members={workspace.members}
-                  invitations={workspace.invitations}
-                  onRefreshWorkspace={refreshWorkspace}
-                />
-              ) : null}
-
-              <section className='grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
+              <section className='grid min-w-0 gap-6'>
                 <RepositoryTable
                   repositories={github?.repositories ?? []}
                   isGithubConnected={Boolean(github?.connected)}
-                  canManageIntegrations={canManageIntegrations}
+                  canManageIntegrations={
+                    organization?.role === 'owner' ||
+                    organization?.role === 'admin'
+                  }
                   isGithubSyncPending={isGithubSyncPending}
                   isPullRequestSyncPending={isPullRequestSyncPending}
                   isWorkflowRunSyncPending={isWorkflowRunSyncPending}
@@ -402,33 +336,10 @@ export function DashboardPage({
                   onSyncWorkflowRuns={handleSyncWorkflowRuns}
                   onSyncAll={handleSyncAll}
                 />
-
-                <aside className='grid h-max gap-6'>
-                  <GitHubPanel
-                    connected={Boolean(github?.connected)}
-                    accountLogin={github?.accountLogin ?? null}
-                    installationId={github?.installationId ?? null}
-                    lastRepositorySyncedAt={
-                      github?.lastRepositorySyncedAt ?? null
-                    }
-                    repositorySyncStatus={
-                      github?.repositorySyncStatus ?? 'idle'
-                    }
-                    repositorySyncError={github?.repositorySyncError ?? null}
-                    canManageIntegrations={canManageIntegrations}
-                    isGithubPending={isGithubPending}
-                    isDisconnectGithubPending={isDisconnectGithubPending}
-                    githubSyncMessage={githubSyncMessage}
-                    githubError={githubError}
-                    githubDisconnectUrl={githubDisconnectUrl}
-                    onConnectGithub={handleConnectGithub}
-                    onDisconnectGithub={() => setIsDisconnectDialogOpen(true)}
-                  />
-                </aside>
               </section>
             </>
           ) : (
-            <section className='grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
+            <section className='grid min-w-0 gap-6'>
               <section className='rounded-lg h-max border border-dashed border-slate-300 bg-white p-8 sm:p-10'>
                 <div className='max-w-2xl'>
                   <p className='m-0 text-sm font-semibold uppercase text-slate-500'>
@@ -471,28 +382,13 @@ export function DashboardPage({
                     </p>
                   </div>
                 </div>
+                <Link
+                  href='/app/organization'
+                  className='mt-8 inline-flex items-center justify-center rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600'
+                >
+                  Open integration settings
+                </Link>
               </section>
-
-              <aside className='grid h-max gap-6'>
-                <GitHubPanel
-                  connected={Boolean(github?.connected)}
-                  accountLogin={github?.accountLogin ?? null}
-                  installationId={github?.installationId ?? null}
-                  lastRepositorySyncedAt={
-                    github?.lastRepositorySyncedAt ?? null
-                  }
-                  repositorySyncStatus={github?.repositorySyncStatus ?? 'idle'}
-                  repositorySyncError={github?.repositorySyncError ?? null}
-                  canManageIntegrations={canManageIntegrations}
-                  isGithubPending={isGithubPending}
-                  isDisconnectGithubPending={isDisconnectGithubPending}
-                  githubSyncMessage={githubSyncMessage}
-                  githubError={githubError}
-                  githubDisconnectUrl={githubDisconnectUrl}
-                  onConnectGithub={handleConnectGithub}
-                  onDisconnectGithub={() => setIsDisconnectDialogOpen(true)}
-                />
-              </aside>
             </section>
           )}
         </div>

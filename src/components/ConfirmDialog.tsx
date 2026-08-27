@@ -79,7 +79,7 @@ export function ConfirmDialog({
             className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:cursor-wait disabled:opacity-70 ${
               tone === 'danger'
                 ? 'bg-red-600 hover:bg-red-500'
-                : 'bg-slate-900 hover:bg-slate-700'
+                : 'bg-brand-700 hover:bg-brand-600'
             }`}
           >
             {isPending ? 'Working...' : confirmLabel}
