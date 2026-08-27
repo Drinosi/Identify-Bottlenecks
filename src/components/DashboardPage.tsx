@@ -134,7 +134,6 @@ export function DashboardPage({
   async function handleSyncRepositories() {
     setGithubError(null)
     setGithubSyncMessage(null)
-    setGithubDisconnectUrl(null)
     setIsGithubSyncPending(true)
 
     try {
