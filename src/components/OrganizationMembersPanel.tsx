@@ -5,23 +5,21 @@ import type { FormEvent } from 'react'
 import type { Workspace } from '@/components/dashboardTypes'
 
 type OrganizationMembersPanelProps = {
-  organization: Workspace['organization']
-  members: Workspace['members']
-  invitations: Workspace['invitations']
-  onRefreshWorkspace: () => Promise<void>
+  initialWorkspace: Workspace
 }
 
 export function OrganizationMembersPanel({
-  organization,
-  members,
-  invitations,
-  onRefreshWorkspace,
+  initialWorkspace,
 }: OrganizationMembersPanelProps) {
+  const [workspace, setWorkspace] = useState(initialWorkspace)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'member' | 'admin'>('member')
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
+  const organization = workspace.organization
+  const members = workspace.members
+  const invitations = workspace.invitations
 
   const canManageMembers =
     organization?.role === 'owner' || organization?.role === 'admin'
@@ -51,10 +49,22 @@ export function OrganizationMembersPanel({
       setRole('member')
       setMessage(`Invite created for ${data.invite.email}.`)
       await copyInviteUrl(data.invite.invite_url)
-      await onRefreshWorkspace()
+      await refreshWorkspace()
     } finally {
       setIsPending(false)
     }
+  }
+
+  async function refreshWorkspace() {
+    const response = await fetch('/api/me/workspace')
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      setError(data?.error ?? 'Unable to refresh organization members.')
+      return
+    }
+
+    setWorkspace(data as Workspace)
   }
 
   return (
@@ -151,7 +161,7 @@ export function OrganizationMembersPanel({
               type='email'
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className='w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-200'
+              className='w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
               required
             />
             <select
@@ -159,7 +169,7 @@ export function OrganizationMembersPanel({
               onChange={(event) =>
                 setRole(event.target.value as 'member' | 'admin')
               }
-              className='rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200'
+              className='rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
             >
               <option value='member'>Member</option>
               <option value='admin'>Admin</option>
@@ -167,7 +177,7 @@ export function OrganizationMembersPanel({
             <button
               type='submit'
               disabled={isPending}
-              className='inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-wait disabled:opacity-70'
+              className='inline-flex items-center justify-center rounded-lg bg-brand-700 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-wait disabled:opacity-70'
             >
               {isPending ? 'Inviting...' : 'Invite member'}
             </button>

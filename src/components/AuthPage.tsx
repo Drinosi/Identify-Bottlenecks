@@ -24,9 +24,9 @@ export function AuthPage({ mode, inviteToken }: AuthPageProps) {
   }, [inviteToken, router, session])
 
   return (
-    <main className='grid min-h-screen place-items-center px-6 py-12'>
-      <section className='grid w-full max-w-md gap-4 rounded-lg border border-slate-200 bg-white p-8 shadow-sm'>
-        <p className='m-0 text-sm font-semibold text-slate-600'>Bottlenecks</p>
+    <main className='grid min-h-screen place-items-center bg-[radial-gradient(circle_at_top,#ece6f0_0%,#f7f4ef_48%)] px-6 py-12'>
+      <section className='grid w-full max-w-md gap-4 rounded-lg border border-brand-100 bg-white p-8 shadow-[0_18px_50px_rgba(80,57,95,0.10)]'>
+        <p className='m-0 text-sm font-semibold text-brand-700'>Bottlenecks</p>
         <h1 className='m-0 text-3xl font-semibold  text-slate-900'>
           {mode === 'sign-in' ? 'Sign in' : 'Create your account'}
         </h1>
@@ -45,7 +45,7 @@ export function AuthPage({ mode, inviteToken }: AuthPageProps) {
             : 'Already have an account? '}
           <Link
             href={mode === 'sign-in' ? '/sign-up' : '/sign-in'}
-            className='font-medium text-slate-900 underline'
+            className='font-medium text-brand-700 underline decoration-brand-300 underline-offset-4'
           >
             {mode === 'sign-in' ? 'Create one' : 'Sign in'}
           </Link>

@@ -100,7 +100,7 @@ export function FirstSyncDialog({
                 step.status === 'success'
                   ? 'border-emerald-200 bg-emerald-50'
                   : step.status === 'loading'
-                    ? 'border-sky-200 bg-sky-50'
+                    ? 'border-brand-200 bg-brand-50'
                     : step.status === 'error'
                       ? 'border-red-200 bg-red-50'
                       : 'border-slate-200 bg-slate-50'
@@ -111,7 +111,7 @@ export function FirstSyncDialog({
                   step.status === 'success'
                     ? 'bg-emerald-600 text-white'
                     : step.status === 'loading'
-                      ? 'bg-sky-600 text-white'
+                      ? 'bg-brand-600 text-white'
                       : step.status === 'error'
                         ? 'bg-red-600 text-white'
                         : 'bg-white text-slate-500'
@@ -135,7 +135,7 @@ export function FirstSyncDialog({
                       step.status === 'success'
                         ? 'bg-emerald-100 text-emerald-800'
                         : step.status === 'loading'
-                          ? 'bg-sky-100 text-sky-800'
+                          ? 'bg-brand-100 text-brand-800'
                           : step.status === 'error'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-white text-slate-600'
@@ -182,7 +182,7 @@ export function FirstSyncDialog({
             className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:cursor-wait disabled:opacity-70 ${
               isComplete
                 ? 'bg-emerald-600 hover:bg-emerald-500'
-                : 'bg-slate-900 hover:bg-slate-700'
+                : 'bg-brand-700 hover:bg-brand-600'
             }`}
           >
             {isComplete

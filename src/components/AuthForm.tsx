@@ -215,7 +215,7 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
       <button
         type='submit'
         disabled={isPending}
-        className='inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-wait disabled:opacity-70'
+        className='inline-flex items-center justify-center rounded-xl bg-brand-700 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-wait disabled:opacity-70'
       >
         {isPending
           ? mode === 'sign-up'
@@ -230,7 +230,7 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
 }
 
 const inputClassName =
-  'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-200'
+  'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
 
 function validateAuthForm({
   email,

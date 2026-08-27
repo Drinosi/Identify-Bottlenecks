@@ -3,8 +3,11 @@ import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { ProfileSaveButton } from '@/components/ProfileSaveButton'
+import { GitHubSettingsPanel } from '@/components/GitHubSettingsPanel'
+import { OrganizationMembersPanel } from '@/components/OrganizationMembersPanel'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { getWorkspaceForUser } from '@/lib/workspace'
 import {
   metricThresholdFieldNames,
   metricThresholdGroups,
@@ -49,6 +52,7 @@ export default async function OrganizationPage({
   )
 
   const organization = result.rows[0]
+  const workspace = await getWorkspaceForUser(session.user)
   const thresholdValues = resolveMetricThresholdValues(
     organization as MetricThresholdOverrides | undefined
   )
@@ -126,6 +130,18 @@ export default async function OrganizationPage({
               </dl>
             </section>
 
+            <OrganizationMembersPanel initialWorkspace={workspace} />
+
+            <section className='max-w-xl'>
+              <div className='mb-4'>
+                <h2 className='m-0 text-xl font-semibold'>Integrations</h2>
+                <p className='mt-2 text-sm leading-6 text-slate-600'>
+                  Manage the data sources connected to this organization.
+                </p>
+              </div>
+              <GitHubSettingsPanel initialWorkspace={workspace} />
+            </section>
+
             {canManageOrganization ? (
               <section className='rounded-lg bg-white p-6 shadow-sm'>
                 <h2 className='m-0 text-xl font-semibold'>
@@ -137,7 +153,7 @@ export default async function OrganizationPage({
                   organization.
                 </p>
 
-                <div className='mt-5 grid gap-2 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950'>
+                <div className='mt-5 grid gap-2 rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm leading-6 text-brand-900'>
                   <p className='m-0'>
                     <strong>Below warning:</strong> the metric is healthy.
                   </p>
@@ -148,7 +164,7 @@ export default async function OrganizationPage({
                     <strong>At critical:</strong> the metric is marked as a
                     bottleneck.
                   </p>
-                  <p className='m-0 text-sky-800'>
+                  <p className='m-0 text-brand-700'>
                     Hour values measure elapsed time. Percentage values measure
                     how much slower a metric is than its recent baseline.
                     Warning must always be lower than critical.
@@ -188,9 +204,7 @@ export default async function OrganizationPage({
                                 defaultValue={
                                   thresholdValues[threshold.warning.name]
                                 }
-                                minimum={
-                                  threshold.unit === 'percent' ? 0 : 1
-                                }
+                                minimum={threshold.unit === 'percent' ? 0 : 1}
                               />
                               <ThresholdInput
                                 name={threshold.critical.name}
@@ -308,7 +322,7 @@ function ThresholdInput({
   return (
     <label className='grid gap-1.5'>
       <span className='text-xs font-medium text-slate-600'>{label}</span>
-      <div className='flex items-center rounded-lg border border-slate-300 bg-white focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200'>
+      <div className='flex items-center rounded-lg border border-slate-300 bg-white focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100'>
         <input
           name={name}
           type='number'
