@@ -9,8 +9,8 @@ button {
 }
 
 body {
-  background: #f8fafc;
-  color: #0f172a;
+  background: #f7f4ef;
+  color: #262233;
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
@@ -26,6 +26,22 @@ body {
 }
 
 @theme {
-  --color-purple-primary: #8534f3;
-  --color-purple-secondary: #8957e5;
+  --color-brand-50: #f6f3f8;
+  --color-brand-100: #ece6f0;
+  --color-brand-200: #d8ccdf;
+  --color-brand-300: #bba8c8;
+  --color-brand-400: #9a7dac;
+  --color-brand-500: #7b5d91;
+  --color-brand-600: #654978;
+  --color-brand-700: #50395f;
+  --color-brand-800: #402f4a;
+  --color-brand-900: #32273a;
+  --color-clay-50: #fcf5f1;
+  --color-clay-100: #f8e7dc;
+  --color-clay-200: #efcbbb;
+  --color-clay-300: #e3a68d;
+  --color-clay-400: #d07f62;
+  --color-clay-500: #b96247;
+  --color-clay-600: #9c4e39;
+  --color-parchment: #f7f4ef;
 }

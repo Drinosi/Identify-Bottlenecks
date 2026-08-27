@@ -80,7 +80,7 @@ export default function Home() {
   }
 
   return (
-    <main className='min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef4ff_45%,#f8fafc_100%)] text-slate-900'>
+    <main className='min-h-screen bg-[linear-gradient(180deg,#f7f4ef_0%,#f1eaf3_48%,#f7f4ef_100%)] text-slate-900'>
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
@@ -89,18 +89,18 @@ export default function Home() {
       />
       <a
         href='#main-content'
-        className='sr-only z-50 rounded-full bg-slate-950 px-4 py-2 text-white focus:not-sr-only focus:fixed focus:top-4 focus:left-4'
+        className='sr-only z-50 rounded-full bg-brand-800 px-4 py-2 text-white focus:not-sr-only focus:fixed focus:top-4 focus:left-4'
       >
         Skip to main content
       </a>
       <section className='mx-auto flex w-full max-w-screen-3xl flex-col px-6 pb-16 pt-6 sm:px-10 lg:px-12'>
-        <header className='flex flex-wrap items-center justify-between gap-4 rounded-md lg:rounded-full border border-white/70 bg-white/80 px-5 py-3 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur'>
+        <header className='flex flex-wrap items-center justify-between gap-4 rounded-md border border-brand-100 bg-white/80 px-5 py-3 shadow-[0_20px_60px_rgba(80,57,95,0.08)] backdrop-blur lg:rounded-full'>
           <Link
             href='/'
             aria-label='Bottlenecks home'
             className='flex items-center gap-3'
           >
-            <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sm font-semibold text-white'>
+            <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-brand-700 text-sm font-semibold text-white shadow-sm'>
               IB
             </div>
             <div>
@@ -144,7 +144,7 @@ export default function Home() {
             </Link>
             <Link
               href='/sign-up'
-              className='inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700'
+              className='inline-flex items-center justify-center rounded-full bg-brand-700 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600'
             >
               Start free
             </Link>
@@ -156,8 +156,8 @@ export default function Home() {
           className='grid scroll-mt-6 gap-10 py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)] lg:items-center lg:py-24'
         >
           <div className='space-y-8'>
-            <div className='inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800'>
-              <span className='h-2 w-2 rounded-full bg-emerald-500' />
+            <div className='inline-flex items-center gap-2 rounded-full border border-clay-200 bg-clay-50 px-4 py-2 text-sm font-medium text-clay-600'>
+              <span className='h-2 w-2 rounded-full bg-clay-400' />
               GitHub engineering analytics for faster software delivery
             </div>
 
@@ -175,7 +175,7 @@ export default function Home() {
             <div className='flex flex-wrap gap-3'>
               <Link
                 href='/sign-up'
-                className='inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-sm font-medium text-white shadow-[0_14px_35px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-700'
+                className='inline-flex items-center justify-center rounded-full bg-brand-700 px-6 py-3.5 text-sm font-medium text-white shadow-[0_14px_35px_rgba(80,57,95,0.22)] transition hover:-translate-y-0.5 hover:bg-brand-600'
               >
                 Create workspace
               </Link>
@@ -225,7 +225,7 @@ export default function Home() {
           </div>
 
           <div className='relative'>
-            <div className='absolute inset-x-12 top-8 h-32 rounded-full bg-sky-200/50 blur-3xl' />
+            <div className='absolute inset-x-12 top-8 h-32 rounded-full bg-brand-200/60 blur-3xl' />
             <div className='absolute inset-x-16 bottom-10 h-32 rounded-full bg-emerald-200/50 blur-3xl' />
             <div className='relative overflow-hidden rounded-xl border border-slate-200/70 bg-slate-950 p-5 shadow-[0_30px_90px_rgba(15,23,42,0.22)]'>
               <div className='flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white/80'>
@@ -352,7 +352,7 @@ export default function Home() {
               on the few signals that usually cause the most frustration.
             </p>
           </div>
-          <div className='rounded-xl border border-slate-200 bg-slate-900 p-7 text-white shadow-[0_18px_60px_rgba(15,23,42,0.12)]'>
+          <div className='rounded-xl border border-brand-700 bg-brand-800 p-7 text-white shadow-[0_18px_60px_rgba(80,57,95,0.18)]'>
             <p className='m-0 text-sm font-semibold  text-slate-400 uppercase'>
               Setup
             </p>
@@ -386,7 +386,7 @@ export default function Home() {
           <div className='grid gap-4'>
             <div className='rounded-xl border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-sm font-semibold text-white'>
+                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-700 text-sm font-semibold text-white'>
                   1
                 </div>
                 <div>
@@ -418,7 +418,7 @@ export default function Home() {
             </div>
             <div className='rounded-xl border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-sm font-semibold text-white'>
+                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-clay-400 text-sm font-semibold text-white'>
                   3
                 </div>
                 <div>
@@ -489,7 +489,7 @@ export default function Home() {
             <div className='flex flex-wrap gap-3'>
               <Link
                 href='/sign-up'
-                className='inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-sm font-medium text-white transition hover:bg-slate-700'
+                className='inline-flex items-center justify-center rounded-full bg-brand-700 px-6 py-3.5 text-sm font-medium text-white transition hover:bg-brand-600'
               >
                 Create account
               </Link>
