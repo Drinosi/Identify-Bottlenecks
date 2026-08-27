@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto'
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
@@ -9,7 +8,6 @@ import { OrganizationMembersPanel } from '@/components/OrganizationMembersPanel'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { getWorkspaceForUser } from '@/lib/workspace'
-import { finalizeSignUpIntent } from '@/lib/signUpIntent'
 import {
   metricThresholdFieldNames,
   metricThresholdGroups,
@@ -34,7 +32,7 @@ export default async function OrganizationPage({
     redirect('/sign-in')
   }
 
-  let result = await db.query(
+  const result = await db.query(
     `
     SELECT
       organizations.name AS organization_name,
@@ -52,28 +50,6 @@ export default async function OrganizationPage({
     `,
     [session.user.id]
   )
-
-  if (!result.rows[0]) {
-    await finalizeSignUpIntent(session.user.email, session.user.id)
-    result = await db.query(
-      `
-      SELECT
-        organizations.name AS organization_name,
-        organizations.slug AS organization_slug,
-        members.role AS organization_role,
-        thresholds.*
-      FROM organization_members AS members
-      INNER JOIN organizations
-        ON organizations.id = members.organization_id
-      LEFT JOIN organization_metric_thresholds AS thresholds
-        ON thresholds.organization_id = members.organization_id
-      WHERE members.user_id = $1
-      ORDER BY members.created_at ASC
-      LIMIT 1
-      `,
-      [session.user.id]
-    )
-  }
 
   const organization = result.rows[0]
   const workspace = await getWorkspaceForUser(session.user)
@@ -259,129 +235,17 @@ export default async function OrganizationPage({
             )}
           </>
         ) : (
-          <section className='rounded-lg border border-dashed border-brand-300 bg-white p-8 sm:p-10'>
+          <section className='rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center'>
             <h2 className='m-0 text-xl font-semibold text-slate-950'>
-              Create your workspace
+              No organization assigned
             </h2>
-            <p className='mt-3 max-w-2xl text-sm leading-6 text-slate-600'>
-              Your account is ready, but it is not attached to a workspace yet.
-              Create one now to connect GitHub and start syncing delivery data.
+            <p className='mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600'>
+              Your account is not currently a member of an organization.
             </p>
-            <form
-              action={createOrganizationAction}
-              className='mt-6 flex max-w-xl flex-col gap-3 sm:flex-row'
-            >
-              <label className='grid min-w-0 flex-1 gap-1.5 text-left'>
-                <span className='text-xs font-medium text-slate-600'>
-                  Workspace name
-                </span>
-                <input
-                  name='organizationName'
-                  type='text'
-                  minLength={2}
-                  maxLength={100}
-                  required
-                  className='w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
-                />
-              </label>
-              <button
-                type='submit'
-                className='mt-auto inline-flex items-center justify-center rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600'
-              >
-                Create workspace
-              </button>
-            </form>
           </section>
         )}
       </div>
     </main>
-  )
-}
-
-async function createOrganizationAction(formData: FormData) {
-  'use server'
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  })
-
-  if (!session?.user) {
-    redirect('/sign-in')
-  }
-
-  const organizationName = formData.get('organizationName')
-  const normalizedName =
-    typeof organizationName === 'string' ? organizationName.trim() : ''
-
-  if (normalizedName.length < 2 || normalizedName.length > 100) {
-    redirect('/app/organization')
-  }
-
-  const client = await db.connect()
-
-  try {
-    await client.query('BEGIN')
-    const membershipResult = await client.query(
-      `
-      SELECT 1
-      FROM organization_members
-      WHERE user_id = $1
-      LIMIT 1
-      `,
-      [session.user.id]
-    )
-
-    if (!membershipResult.rows[0]) {
-      const baseSlug = createOrganizationSlug(normalizedName)
-      const slugResult = await client.query(
-        `
-        SELECT 1
-        FROM organizations
-        WHERE slug = $1
-        LIMIT 1
-        `,
-        [baseSlug]
-      )
-      const slug = slugResult.rows[0]
-        ? `${baseSlug}-${randomUUID().slice(0, 8)}`
-        : baseSlug
-      const organizationResult = await client.query(
-        `
-        INSERT INTO organizations (name, slug)
-        VALUES ($1, $2)
-        RETURNING id
-        `,
-        [normalizedName, slug]
-      )
-
-      await client.query(
-        `
-        INSERT INTO organization_members (organization_id, user_id, role)
-        VALUES ($1, $2, 'owner')
-        `,
-        [organizationResult.rows[0].id, session.user.id]
-      )
-    }
-
-    await client.query('COMMIT')
-  } catch (error) {
-    await client.query('ROLLBACK')
-    throw error
-  } finally {
-    client.release()
-  }
-
-  revalidatePath('/app/organization')
-  revalidatePath('/app')
-  redirect('/app/organization')
-}
-
-function createOrganizationSlug(value: string) {
-  return (
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'organization'
   )
 }
 
