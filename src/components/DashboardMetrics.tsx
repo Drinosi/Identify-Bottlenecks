@@ -76,6 +76,7 @@ export function DashboardMetrics({
       />
       <MetricCard
         label='Successful Pipelines'
+        accent='cyan'
         value={github?.pipeline.successfulRunsLast30Days ?? 0}
         detail={
           github?.pipeline.successRateLast30Days === null

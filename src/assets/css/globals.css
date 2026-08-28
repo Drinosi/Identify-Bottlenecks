@@ -9,9 +9,42 @@ button {
 }
 
 body {
-  background: #f7f4ef;
+  background: #f7f9ff;
   color: #262233;
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+.page-background {
+  background-color: #f7f9ff;
+  background-image:
+    radial-gradient(ellipse at 0% 0%, #e3ddff 0%, transparent 45%),
+    radial-gradient(ellipse at 100% 20%, #cffafe 0%, transparent 40%);
+  background-size: 100% 850px;
+  background-repeat: no-repeat;
+}
+
+.marketing-hero {
+  background: linear-gradient(125deg, #4216a6 0%, #6524e8 62%, #344cde 100%);
+}
+
+.auth-background {
+  background-color: #351380;
+  background-image:
+    radial-gradient(ellipse at 0% 0%, #7928ed 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 100%, #087e96 0%, transparent 55%);
+}
+
+.spectrum-edge::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    #7028ef 0% 25%,
+    #24d7e8 25% 50%,
+    #d5f54a 50% 75%,
+    #ff7c87 75%
+  );
 }
 
 .number-input-no-spinner {
@@ -26,22 +59,26 @@ body {
 }
 
 @theme {
-  --color-brand-50: #f6f3f8;
-  --color-brand-100: #ece6f0;
-  --color-brand-200: #d8ccdf;
-  --color-brand-300: #bba8c8;
-  --color-brand-400: #9a7dac;
-  --color-brand-500: #7b5d91;
-  --color-brand-600: #654978;
-  --color-brand-700: #50395f;
-  --color-brand-800: #402f4a;
-  --color-brand-900: #32273a;
-  --color-clay-50: #fcf5f1;
-  --color-clay-100: #f8e7dc;
-  --color-clay-200: #efcbbb;
-  --color-clay-300: #e3a68d;
-  --color-clay-400: #d07f62;
-  --color-clay-500: #b96247;
-  --color-clay-600: #9c4e39;
-  --color-parchment: #f7f4ef;
+  --color-electric: #7028ef;
+  --color-aqua: #24d7e8;
+  --color-citrus: #d5f54a;
+  --color-coral: #ff7c87;
+  --color-ink: #201044;
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+  --color-clay-50: #fff1f2;
+  --color-clay-100: #ffe4e6;
+  --color-clay-200: #fecdd3;
+  --color-clay-300: #fda4af;
+  --color-clay-400: #d9364b;
+  --color-clay-500: #c72540;
+  --color-clay-600: #b51e38;
 }

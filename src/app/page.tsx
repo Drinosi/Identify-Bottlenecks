@@ -80,7 +80,7 @@ export default function Home() {
   }
 
   return (
-    <main className='min-h-screen bg-[linear-gradient(180deg,#f7f4ef_0%,#f1eaf3_48%,#f7f4ef_100%)] text-slate-900'>
+    <main className='min-h-screen page-background text-slate-900'>
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
@@ -94,7 +94,7 @@ export default function Home() {
         Skip to main content
       </a>
       <section className='mx-auto flex w-full max-w-screen-3xl flex-col px-6 pb-16 pt-6 sm:px-10 lg:px-12'>
-        <header className='flex flex-wrap items-center justify-between gap-4 rounded-md border border-brand-100 bg-white/80 px-5 py-3 shadow-[0_20px_60px_rgba(80,57,95,0.08)] backdrop-blur lg:rounded-full'>
+        <header className='flex flex-wrap items-center justify-between gap-4 rounded-md border border-brand-100 bg-white/80 px-5 py-3 shadow-[0_20px_60px_rgba(109,40,217,0.08)] backdrop-blur lg:rounded-full'>
           <Link
             href='/'
             aria-label='Bottlenecks home'
@@ -153,19 +153,21 @@ export default function Home() {
 
         <section
           id='main-content'
-          className='grid scroll-mt-6 gap-10 py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)] lg:items-center lg:py-24'
+          className='marketing-hero mt-6 grid scroll-mt-6 gap-10 rounded-3xl px-5 py-10 sm:px-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)] lg:items-center lg:px-10 lg:py-16'
         >
           <div className='space-y-8'>
-            <div className='inline-flex items-center gap-2 rounded-full border border-clay-200 bg-clay-50 px-4 py-2 text-sm font-medium text-clay-600'>
-              <span className='h-2 w-2 rounded-full bg-clay-400' />
+            <div className='inline-flex items-center gap-2 rounded-full border border-citrus bg-citrus px-4 py-2 text-sm font-semibold text-ink'>
+              <span className='h-2 w-2 shrink-0 rounded-full bg-ink' />
               GitHub engineering analytics for faster software delivery
             </div>
 
             <div className='space-y-5'>
-              <h1 className='m-0 max-w-4xl text-5xl font-semibold  text-slate-950 sm:text-6xl lg:text-7xl'>
-                Find and fix engineering bottlenecks in GitHub delivery.
+              <h1 className='m-0 max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-5xl xl:text-6xl'>
+                Find and fix engineering{' '}
+                <span className='text-citrus'>bottlenecks</span> in GitHub
+                delivery.
               </h1>
-              <p className='m-0 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl'>
+              <p className='m-0 max-w-2xl text-lg leading-8 text-violet-100 sm:text-xl'>
                 Spot slow pull request reviews, unstable CI pipelines, and
                 repository-level delivery risks. Bottlenecks turns GitHub
                 activity into actionable engineering signals your team can use.
@@ -175,7 +177,7 @@ export default function Home() {
             <div className='flex flex-wrap gap-3'>
               <Link
                 href='/sign-up'
-                className='inline-flex items-center justify-center rounded-full bg-brand-700 px-6 py-3.5 text-sm font-medium text-white shadow-[0_14px_35px_rgba(80,57,95,0.22)] transition hover:-translate-y-0.5 hover:bg-brand-600'
+                className='inline-flex items-center justify-center rounded-full bg-citrus px-6 py-3.5 text-sm font-semibold text-ink shadow-lg transition hover:-translate-y-0.5 hover:bg-lime-200'
               >
                 Create workspace
               </Link>
@@ -188,30 +190,30 @@ export default function Home() {
             </div>
 
             <div className='grid gap-4 sm:grid-cols-3'>
-              <div className='rounded-lg border border-white/80 bg-white/80 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.07)] backdrop-blur'>
-                <p className='m-0 text-sm font-medium text-slate-500'>
+              <div className='rounded-xl border-t-4 bg-rose-100 border-t-coral p-5 shadow-lg'>
+                <p className='m-0 text-sm font-medium text-slate-700'>
                   Open reviews
                 </p>
                 <p className='mt-3 mb-1 text-3xl font-semibold text-slate-950'>
                   11
                 </p>
-                <p className='m-0 text-sm text-rose-600'>
+                <p className='m-0 text-sm text-rose-800'>
                   3 have been waiting for more than 5 days
                 </p>
               </div>
-              <div className='rounded-lg border border-white/80 bg-white/80 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.07)] backdrop-blur'>
-                <p className='m-0 text-sm font-medium text-slate-500'>
+              <div className='rounded-xl border-t-4 bg-cyan-100 border-t-aqua p-5 shadow-lg'>
+                <p className='m-0 text-sm font-medium text-slate-700'>
                   Pipeline health
                 </p>
                 <p className='mt-3 mb-1 text-3xl font-semibold text-slate-950'>
                   82%
                 </p>
-                <p className='m-0 text-sm text-amber-700'>
+                <p className='m-0 text-sm text-amber-900'>
                   Failure rate up 14% from the weekly baseline
                 </p>
               </div>
-              <div className='rounded-lg border border-white/80 bg-white/80 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.07)] backdrop-blur'>
-                <p className='m-0 text-sm font-medium text-slate-500'>
+              <div className='rounded-xl border-t-4 bg-lime-100 border-t-citrus p-5 shadow-lg'>
+                <p className='m-0 text-sm font-medium text-slate-700'>
                   Repositories tracked
                 </p>
                 <p className='mt-3 mb-1 text-3xl font-semibold text-slate-950'>
@@ -323,13 +325,13 @@ export default function Home() {
         <section
           id='features'
           aria-labelledby='features-heading'
-          className='grid scroll-mt-6 gap-6 lg:grid-cols-3'
+          className='mt-8 grid scroll-mt-6 gap-6 lg:grid-cols-3'
         >
           <h2 id='features-heading' className='sr-only'>
             Engineering delivery analytics for GitHub teams
           </h2>
-          <div className='rounded-xl border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.06)]'>
-            <p className='m-0 text-sm font-semibold  text-slate-400 uppercase'>
+          <div className='rounded-xl border border-cyan-200 bg-cyan-100 p-7'>
+            <p className='m-0 text-sm font-semibold  text-slate-600 uppercase'>
               Why teams use it
             </p>
             <h2 className='mt-4 mb-3 text-2xl font-semibold  text-slate-950'>
@@ -340,8 +342,8 @@ export default function Home() {
               What is harder is seeing when a delay becomes a team habit.
             </p>
           </div>
-          <div className='rounded-xl border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.06)]'>
-            <p className='m-0 text-sm font-semibold  text-slate-400 uppercase'>
+          <div className='rounded-xl border border-rose-200 bg-rose-100 p-7'>
+            <p className='m-0 text-sm font-semibold  text-slate-600 uppercase'>
               What gets surfaced
             </p>
             <h2 className='mt-4 mb-3 text-2xl font-semibold  text-slate-950'>
@@ -352,14 +354,14 @@ export default function Home() {
               on the few signals that usually cause the most frustration.
             </p>
           </div>
-          <div className='rounded-xl border border-brand-700 bg-brand-800 p-7 text-white shadow-[0_18px_60px_rgba(80,57,95,0.18)]'>
-            <p className='m-0 text-sm font-semibold  text-slate-400 uppercase'>
+          <div className='rounded-xl border border-lime-200 bg-citrus p-7 text-ink'>
+            <p className='m-0 text-sm font-semibold  text-slate-600 uppercase'>
               Setup
             </p>
             <h2 className='mt-4 mb-3 text-2xl font-semibold '>
               Connect your GitHub app and start from the repos you already own.
             </h2>
-            <p className='m-0 text-base leading-7 text-slate-300'>
+            <p className='m-0 text-base leading-7 text-slate-700'>
               No spreadsheet cleanup, no manual status reviews, and no need to
               teach the team a new workflow just to get useful visibility.
             </p>
@@ -402,7 +404,7 @@ export default function Home() {
             </div>
             <div className='rounded-xl border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-sm font-semibold text-white'>
+                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-aqua text-sm font-semibold text-ink'>
                   2
                 </div>
                 <div>
@@ -418,7 +420,7 @@ export default function Home() {
             </div>
             <div className='rounded-xl border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-clay-400 text-sm font-semibold text-white'>
+                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-coral text-sm font-semibold text-ink'>
                   3
                 </div>
                 <div>
@@ -472,7 +474,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className='mt-16 rounded-xl border border-slate-200 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.06)] sm:p-10'>
+        <section className='mt-16 rounded-xl border border-violet-200 bg-violet-100 p-8 sm:p-10'>
           <div className='flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between'>
             <div className='max-w-2xl'>
               <p className='m-0 text-sm font-semibold  text-slate-400 uppercase'>
