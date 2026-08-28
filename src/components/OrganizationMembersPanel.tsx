@@ -47,9 +47,20 @@ export function OrganizationMembersPanel({
 
       setEmail('')
       setRole('member')
-      setMessage(`Invite created for ${data.invite.email}.`)
-      await copyInviteUrl(data.invite.invite_url)
+      if (data.email_status === 'sent') {
+        setMessage(`Invitation email sent to ${data.invite.email}.`)
+      } else {
+        setError(
+          data.email_status === 'logged'
+            ? 'Invitation created, but email delivery is not configured. Copy the link from Pending invites to share it.'
+            : 'Invitation created, but the email could not be sent. Copy the link from Pending invites, or submit the same email again to retry.'
+        )
+      }
       await refreshWorkspace()
+    } catch {
+      setError(
+        'Unable to confirm the invitation. Refresh the page to check Pending invites before trying again.'
+      )
     } finally {
       setIsPending(false)
     }
@@ -179,7 +190,7 @@ export function OrganizationMembersPanel({
               disabled={isPending}
               className='inline-flex items-center justify-center rounded-lg bg-brand-700 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-wait disabled:opacity-70'
             >
-              {isPending ? 'Inviting...' : 'Invite member'}
+              {isPending ? 'Sending invitation...' : 'Send invitation'}
             </button>
           </div>
           {message ? (

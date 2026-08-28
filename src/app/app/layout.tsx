@@ -18,8 +18,8 @@ export default async function ProtectedAppLayout({
   }
 
   return (
-    <div className='min-h-screen bg-parchment text-slate-900'>
-      <div className='border-b border-brand-200 bg-white/90 backdrop-blur'>
+    <div className='min-h-screen page-background text-slate-900'>
+      <div className='spectrum-edge border-b border-brand-200 bg-white/90 backdrop-blur'>
         <div className='mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6'>
           <div className='min-w-0'>
             <Link

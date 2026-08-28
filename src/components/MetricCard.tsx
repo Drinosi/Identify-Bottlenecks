@@ -10,6 +10,7 @@ type MetricCardProps = {
   detail: string
   icon?: ReactNode
   status?: MetricStatus
+  accent?: 'violet' | 'cyan'
   href?: string
 }
 
@@ -20,13 +21,17 @@ export function MetricCard({
   icon,
   status,
   href,
+  accent = 'violet',
 }: MetricCardProps) {
   const resolvedStatus = status ?? 'unknown'
+  const cardStyle = status
+    ? cardStatusClassNames[resolvedStatus]
+    : accentClassNames[accent]
   const content = (
     <section
-      className={`h-full min-w-0 rounded-lg border p-5 transition-colors ${cardStatusClassNames[resolvedStatus]}`}
+      className={`h-full min-w-0 rounded-xl border border-t-4 p-5 transition-colors ${cardStyle}`}
     >
-      <div className='flex items-start justify-between gap-3'>
+      <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
           {icon && icon}
           <p
@@ -48,7 +53,7 @@ export function MetricCard({
             </span>
           ) : null}
           {href ? (
-            <span className='flex w-30 items-center justify-center items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600'>
+            <span className='flex shrink-0 items-center justify-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600'>
               View details
               <HiOutlineArrowTopRightOnSquare className='text-sm' />
             </span>
@@ -89,10 +94,10 @@ const statusDotClassNames: Record<MetricStatus, string> = {
 }
 
 const cardStatusClassNames: Record<MetricStatus, string> = {
-  healthy: 'border-emerald-200 bg-emerald-50/70',
-  warning: 'border-amber-300 bg-amber-50',
-  critical: 'border-red-300 bg-red-50',
-  unknown: 'border-slate-200 bg-white',
+  healthy: 'border-emerald-200 border-t-emerald-500 bg-emerald-50',
+  warning: 'border-amber-200 border-t-amber-500 bg-amber-50',
+  critical: 'border-rose-200 border-t-rose-500 bg-rose-50',
+  unknown: 'border-slate-200 border-t-slate-400 bg-white',
 }
 
 const labelStatusClassNames: Record<MetricStatus, string> = {
@@ -100,4 +105,9 @@ const labelStatusClassNames: Record<MetricStatus, string> = {
   warning: 'text-amber-900/70',
   critical: 'text-red-900/70',
   unknown: 'text-slate-500',
+}
+
+const accentClassNames = {
+  violet: 'border-violet-200 border-t-electric bg-violet-50',
+  cyan: 'border-cyan-200 border-t-aqua bg-cyan-50',
 }

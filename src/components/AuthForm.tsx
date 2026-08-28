@@ -124,7 +124,9 @@ export function AuthForm({ mode, inviteToken }: AuthFormProps) {
         }
       }
 
-      router.push('/app')
+      router.push(
+        inviteToken ? `/join?invite=${encodeURIComponent(inviteToken)}` : '/app'
+      )
       router.refresh()
     } catch {
       setError('Something went wrong. Please try again.')
