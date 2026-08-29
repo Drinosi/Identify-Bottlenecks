@@ -42,10 +42,14 @@ export function DashboardPage({
     useState(false)
   const [isWorkflowRunSyncPending, setIsWorkflowRunSyncPending] =
     useState(false)
+  const [isCommitSyncPending, setIsCommitSyncPending] = useState(false)
   const [syncingPullRequestRepositoryId, setSyncingPullRequestRepositoryId] =
     useState<string | null>(null)
   const [syncingWorkflowRunRepositoryId, setSyncingWorkflowRunRepositoryId] =
     useState<string | null>(null)
+  const [syncingCommitRepositoryId, setSyncingCommitRepositoryId] = useState<
+    string | null
+  >(null)
   const isFirstConnection = initialGithubStatus === 'connected-first'
   const [isFirstSyncDialogOpen, setIsFirstSyncDialogOpen] =
     useState(isFirstConnection)
@@ -131,6 +135,25 @@ export function DashboardPage({
     return true
   }
 
+  async function syncCommits(repositoryId?: string): Promise<boolean> {
+    const response = await fetch('/api/integrations/sync-commits', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: repositoryId ? JSON.stringify({ repositoryId }) : undefined,
+    })
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      setGithubError(data?.error ?? 'Unable to sync commits.')
+      return false
+    }
+
+    setGithubSyncMessage(`Synced ${data.synced} commits.`)
+    return true
+  }
+
   async function handleSyncRepositories() {
     setGithubError(null)
     setGithubSyncMessage(null)
@@ -203,9 +226,37 @@ export function DashboardPage({
     }
   }
 
+  async function handleSyncCommits(repositoryId?: string) {
+    setGithubError(null)
+    setGithubSyncMessage(null)
+
+    if (repositoryId) {
+      setSyncingCommitRepositoryId(repositoryId)
+    } else {
+      setIsCommitSyncPending(true)
+    }
+
+    try {
+      const didSync = await syncCommits(repositoryId)
+
+      if (!didSync) {
+        return
+      }
+
+      await refreshWorkspace()
+    } finally {
+      if (repositoryId) {
+        setSyncingCommitRepositoryId(null)
+      } else {
+        setIsCommitSyncPending(false)
+      }
+    }
+  }
+
   async function handleSyncAll() {
     await handleSyncRepositories()
     await handleSyncPullRequests()
+    await handleSyncCommits()
     await handleSyncWorkflowRuns()
   }
 
@@ -232,6 +283,11 @@ export function DashboardPage({
           key: 'pullRequests',
           run: () => syncPullRequests(),
           failureMessage: 'Unable to sync pull requests.',
+        },
+        {
+          key: 'commits',
+          run: () => syncCommits(),
+          failureMessage: 'Unable to sync commits.',
         },
         {
           key: 'workflowRuns',
@@ -324,15 +380,18 @@ export function DashboardPage({
                   isGithubSyncPending={isGithubSyncPending}
                   isPullRequestSyncPending={isPullRequestSyncPending}
                   isWorkflowRunSyncPending={isWorkflowRunSyncPending}
+                  isCommitSyncPending={isCommitSyncPending}
                   syncingPullRequestRepositoryId={
                     syncingPullRequestRepositoryId
                   }
                   syncingWorkflowRunRepositoryId={
                     syncingWorkflowRunRepositoryId
                   }
+                  syncingCommitRepositoryId={syncingCommitRepositoryId}
                   onSyncRepositories={handleSyncRepositories}
                   onSyncPullRequests={handleSyncPullRequests}
                   onSyncWorkflowRuns={handleSyncWorkflowRuns}
+                  onSyncCommits={handleSyncCommits}
                   onSyncAll={handleSyncAll}
                 />
               </section>
@@ -410,6 +469,13 @@ function createFirstSyncSteps(): FirstSyncStep[] {
       label: 'Syncing pull requests',
       description:
         'Fetch open and recent pull request activity for repository metrics.',
+      status: 'idle',
+    },
+    {
+      key: 'commits',
+      label: 'Syncing commits',
+      description:
+        'Fetch default-branch commits so author profiles reflect pushed work.',
       status: 'idle',
     },
     {

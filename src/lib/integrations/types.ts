@@ -56,6 +56,17 @@ export type IntegrationWorkflowRun = {
   updatedAt: string
 }
 
+export type IntegrationCommit = {
+  externalId: string
+  sha: string
+  message: string
+  author: IntegrationIdentity | null
+  authorName: string | null
+  authorEmail: string | null
+  committedAt: string
+  htmlUrl: string | null
+}
+
 export type IntegrationProvider = {
   id: IntegrationProviderId
   label: string
@@ -77,4 +88,9 @@ export type IntegrationProvider = {
     repository: Pick<IntegrationRepository, 'owner' | 'name' | 'defaultBranch'>,
     options?: { updatedSince?: string | null }
   ) => Promise<IntegrationWorkflowRun[]>
+  listCommits: (
+    connection: IntegrationConnection,
+    repository: Pick<IntegrationRepository, 'owner' | 'name' | 'defaultBranch'>,
+    options?: { updatedSince?: string | null }
+  ) => Promise<IntegrationCommit[]>
 }

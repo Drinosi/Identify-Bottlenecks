@@ -6,7 +6,7 @@ import { FaCheck, FaSpinner } from 'react-icons/fa'
 type FirstSyncStepStatus = 'idle' | 'loading' | 'success' | 'error'
 
 type FirstSyncStep = {
-  key: 'repositories' | 'pullRequests' | 'workflowRuns'
+  key: 'repositories' | 'pullRequests' | 'commits' | 'workflowRuns'
   label: string
   description: string
   status: FirstSyncStepStatus

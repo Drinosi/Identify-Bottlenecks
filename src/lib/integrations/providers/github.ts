@@ -1,6 +1,7 @@
 import {
   fetchInstallationRepositories,
   fetchPullRequestReviews,
+  fetchRepositoryCommits,
   fetchRepositoryPullRequests,
   fetchRepositoryWorkflowRuns,
 } from '@/lib/github'
@@ -87,6 +88,35 @@ export const githubProvider: IntegrationProvider = {
       runStartedAt: workflowRun.run_started_at,
       createdAt: workflowRun.created_at,
       updatedAt: workflowRun.updated_at,
+    }))
+  },
+  async listCommits(connection, repository, options) {
+    const commits = await fetchRepositoryCommits(
+      connection.externalInstallationId,
+      repository.owner,
+      repository.name,
+      repository.defaultBranch,
+      options?.updatedSince
+    )
+
+    return commits.map((commit) => ({
+      externalId: commit.sha,
+      sha: commit.sha,
+      message: commit.commit.message,
+      author: commit.author
+        ? {
+            externalId: String(commit.author.id),
+            login: commit.author.login,
+            displayName: null,
+            avatarUrl: commit.author.avatar_url,
+            profileUrl: commit.author.html_url,
+            email: commit.commit.author?.email ?? null,
+          }
+        : null,
+      authorName: commit.commit.author?.name ?? null,
+      authorEmail: commit.commit.author?.email ?? null,
+      committedAt: commit.commit.author?.date ?? new Date().toISOString(),
+      htmlUrl: commit.html_url,
     }))
   },
 }

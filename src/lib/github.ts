@@ -62,6 +62,25 @@ export type GitHubWorkflowRun = {
   updated_at: string
 }
 
+export type GitHubCommit = {
+  sha: string
+  html_url: string | null
+  commit: {
+    message: string
+    author: {
+      name: string | null
+      email: string | null
+      date: string
+    } | null
+  }
+  author: {
+    id: number
+    login: string
+    avatar_url: string | null
+    html_url: string | null
+  } | null
+}
+
 export function getGitHubInstallationSettingsUrl(
   accountLogin: string,
   accountType: string
@@ -173,6 +192,25 @@ export async function fetchRepositoryWorkflowRuns(
     'workflow_runs',
     (workflowRun) => new Date(workflowRun.updated_at) <= new Date(updatedSince)
   )
+}
+
+export async function fetchRepositoryCommits(
+  installationId: string,
+  owner: string,
+  repo: string,
+  defaultBranch: string,
+  updatedSince?: string | null
+) {
+  const token = await createInstallationAccessToken(installationId)
+  const url = new URL(`https://api.github.com/repos/${owner}/${repo}/commits`)
+  url.searchParams.set('sha', defaultBranch)
+  url.searchParams.set('per_page', '100')
+
+  if (updatedSince) {
+    url.searchParams.set('since', new Date(updatedSince).toISOString())
+  }
+
+  return fetchPaginated<GitHubCommit>(url.toString(), token)
 }
 
 async function createInstallationAccessToken(installationId: string) {

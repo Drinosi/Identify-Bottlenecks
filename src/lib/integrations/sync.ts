@@ -17,6 +17,10 @@ type SyncWorkflowRunsResult = {
   synced: number
 }
 
+type SyncCommitsResult = {
+  synced: number
+}
+
 export class IntegrationSyncError extends Error {
   statusCode: number
 
@@ -496,6 +500,168 @@ export async function syncWorkflowRunsForUser(
       SET
         workflow_run_sync_status = 'failed',
         workflow_run_sync_error = $1,
+        updated_at = NOW()
+      WHERE id = ANY($2::UUID[])
+      `,
+      [error instanceof Error ? error.message : 'Unknown error', repositoryIds]
+    )
+
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+export async function syncCommitsForUser(
+  userId: string,
+  repositoryId: string | null
+): Promise<SyncCommitsResult> {
+  const repositoriesResult = await db.query(
+    `
+    SELECT
+      github_installations.organization_id,
+      github_installations.installation_id,
+      github_repositories.id,
+      github_repositories.owner,
+      github_repositories.name,
+      github_repositories.default_branch AS "defaultBranch",
+      github_repositories.last_commit_synced_at
+    FROM github_repositories
+    INNER JOIN github_installations
+      ON github_installations.id = github_repositories.github_installation_id
+    INNER JOIN organization_members
+      ON organization_members.organization_id = github_installations.organization_id
+    WHERE organization_members.user_id = $1
+      AND organization_members.role IN ('owner', 'admin')
+      AND ($2::UUID IS NULL OR github_repositories.id = $2::UUID)
+    ORDER BY github_repositories.full_name ASC
+    `,
+    [userId, repositoryId]
+  )
+
+  if (!repositoriesResult.rows.length) {
+    throw new IntegrationSyncError(
+      repositoryId
+        ? 'Repository not found'
+        : 'Sync repositories before syncing commits',
+      404
+    )
+  }
+
+  const provider = getIntegrationProvider('github')
+  const client = await db.connect()
+  const repositoryIds = repositoriesResult.rows.map(
+    (repository) => repository.id
+  )
+  const syncStartedAt = new Date()
+  let synced = 0
+  let transactionStarted = false
+
+  try {
+    await db.query(
+      `
+      UPDATE github_repositories
+      SET
+        commit_sync_status = 'syncing',
+        commit_sync_error = NULL,
+        updated_at = NOW()
+      WHERE id = ANY($1::UUID[])
+      `,
+      [repositoryIds]
+    )
+
+    await client.query('BEGIN')
+    transactionStarted = true
+
+    for (const repository of repositoriesResult.rows) {
+      const connection: IntegrationConnection = {
+        provider: 'github',
+        externalInstallationId: String(repository.installation_id),
+      }
+      const commits = await provider.listCommits(connection, repository, {
+        updatedSince: repository.last_commit_synced_at,
+      })
+
+      for (const commit of commits) {
+        const authorIdentityId = commit.author
+          ? await upsertIntegrationIdentity(
+              client,
+              repository.organization_id,
+              'github',
+              commit.author
+            )
+          : null
+
+        await client.query(
+          `
+          INSERT INTO repository_commits (
+            github_repository_id,
+            provider,
+            external_id,
+            sha,
+            author_identity_id,
+            author_name,
+            author_email,
+            message,
+            committed_at,
+            html_url,
+            updated_at
+          )
+          VALUES ($1, 'github', $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+          ON CONFLICT (github_repository_id, sha)
+          DO UPDATE SET
+            author_identity_id = EXCLUDED.author_identity_id,
+            author_name = EXCLUDED.author_name,
+            author_email = EXCLUDED.author_email,
+            message = EXCLUDED.message,
+            committed_at = EXCLUDED.committed_at,
+            html_url = EXCLUDED.html_url,
+            updated_at = NOW()
+          `,
+          [
+            repository.id,
+            commit.externalId,
+            commit.sha,
+            authorIdentityId,
+            commit.authorName,
+            commit.authorEmail,
+            commit.message,
+            commit.committedAt,
+            commit.htmlUrl,
+          ]
+        )
+
+        synced += 1
+      }
+
+      await client.query(
+        `
+        UPDATE github_repositories
+        SET
+          last_commit_synced_at = $2,
+          commit_sync_status = 'idle',
+          commit_sync_error = NULL,
+          updated_at = NOW()
+        WHERE id = $1
+        `,
+        [repository.id, syncStartedAt]
+      )
+    }
+
+    await client.query('COMMIT')
+
+    return { synced }
+  } catch (error) {
+    if (transactionStarted) {
+      await client.query('ROLLBACK')
+    }
+
+    await db.query(
+      `
+      UPDATE github_repositories
+      SET
+        commit_sync_status = 'failed',
+        commit_sync_error = $1,
         updated_at = NOW()
       WHERE id = ANY($2::UUID[])
       `,
