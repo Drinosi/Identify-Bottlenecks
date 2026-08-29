@@ -34,16 +34,16 @@ export const auth = betterAuth({
     async sendResetPassword({ user, url }) {
       await sendEmail({
         to: user.email,
-        subject: 'Reset your Identify Bottlenecks password',
+        subject: 'Reset your Bottlenecks password',
         text: [
-          'Reset your Identify Bottlenecks password by opening this link:',
+          'Reset your Bottlenecks password by opening this link:',
           url,
           'This link expires in one hour. If you did not request a password reset, you can ignore this email.',
         ].join('\n\n'),
         html: `
           <div style="font-family: sans-serif; line-height: 1.5; color: #0f172a;">
             <h1 style="font-size: 20px;">Reset your password</h1>
-            <p>We received a request to reset your Identify Bottlenecks password.</p>
+            <p>We received a request to reset your Bottlenecks password.</p>
             <p>
               <a href="${url}" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 12px 18px; border-radius: 10px; text-decoration: none;">
                 Reset password
@@ -66,15 +66,15 @@ export const auth = betterAuth({
     async sendVerificationEmail({ user, url }) {
       await sendEmail({
         to: user.email,
-        subject: 'Verify your Identify Bottlenecks account',
+        subject: 'Verify your Bottlenecks account',
         text: [
-          'Verify your email for Identify Bottlenecks by opening this link:',
+          'Verify your email for Bottlenecks by opening this link:',
           url,
         ].join('\n\n'),
         html: `
           <div style="font-family: sans-serif; line-height: 1.5; color: #0f172a;">
             <h1 style="font-size: 20px;">Verify your email</h1>
-            <p>Finish setting up your Identify Bottlenecks account by verifying your email address.</p>
+            <p>Finish setting up your Bottlenecks account by verifying your email address.</p>
             <p>
               <a href="${url}" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 12px 18px; border-radius: 10px; text-decoration: none;">
                 Verify email

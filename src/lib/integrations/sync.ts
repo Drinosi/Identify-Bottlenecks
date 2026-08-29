@@ -1,6 +1,9 @@
 import { db } from '@/lib/db'
 import { getIntegrationProvider } from '@/lib/integrations/getIntegrationProvider'
-import type { IntegrationConnection } from '@/lib/integrations/types'
+import type {
+  IntegrationConnection,
+  IntegrationIdentity,
+} from '@/lib/integrations/types'
 
 type SyncRepositoriesResult = {
   synced: number
@@ -163,6 +166,7 @@ export async function syncPullRequestsForUser(
   const repositoriesResult = await db.query(
     `
     SELECT
+      github_installations.organization_id,
       github_installations.installation_id,
       github_repositories.id,
       github_repositories.owner,
@@ -227,6 +231,14 @@ export async function syncPullRequestsForUser(
       )
 
       for (const pullRequest of pullRequests) {
+        const authorIdentityId = pullRequest.author
+          ? await upsertIntegrationIdentity(
+              client,
+              repository.organization_id,
+              'github',
+              pullRequest.author
+            )
+          : null
         const reviews = await provider.listPullRequestReviews(
           connection,
           repository,
@@ -247,6 +259,7 @@ export async function syncPullRequestsForUser(
             title,
             state,
             author_login,
+            author_identity_id,
             draft,
             opened_at,
             closed_at,
@@ -256,12 +269,13 @@ export async function syncPullRequestsForUser(
             review_count,
             updated_at
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())
           ON CONFLICT (github_pull_request_id)
           DO UPDATE SET
             title = EXCLUDED.title,
             state = EXCLUDED.state,
             author_login = EXCLUDED.author_login,
+            author_identity_id = EXCLUDED.author_identity_id,
             draft = EXCLUDED.draft,
             closed_at = EXCLUDED.closed_at,
             merged_at = EXCLUDED.merged_at,
@@ -277,6 +291,7 @@ export async function syncPullRequestsForUser(
             pullRequest.title,
             pullRequest.state,
             pullRequest.authorLogin,
+            authorIdentityId,
             pullRequest.draft,
             pullRequest.openedAt,
             pullRequest.closedAt,
@@ -583,4 +598,54 @@ async function refreshRepositoryPipelineDailyMetrics(
     `,
     [repositoryId]
   )
+}
+
+async function upsertIntegrationIdentity(
+  client: {
+    query: (
+      sql: string,
+      values?: unknown[]
+    ) => Promise<{ rows: Array<{ id: string }> }>
+  },
+  organizationId: string,
+  provider: string,
+  identity: IntegrationIdentity
+) {
+  const result = await client.query(
+    `
+    INSERT INTO integration_identities (
+      organization_id,
+      provider,
+      external_id,
+      login,
+      display_name,
+      avatar_url,
+      profile_url,
+      email,
+      updated_at
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+    ON CONFLICT (organization_id, provider, external_id)
+    DO UPDATE SET
+      login = EXCLUDED.login,
+      display_name = EXCLUDED.display_name,
+      avatar_url = EXCLUDED.avatar_url,
+      profile_url = EXCLUDED.profile_url,
+      email = EXCLUDED.email,
+      updated_at = NOW()
+    RETURNING id
+    `,
+    [
+      organizationId,
+      provider,
+      identity.externalId,
+      identity.login,
+      identity.displayName,
+      identity.avatarUrl,
+      identity.profileUrl,
+      identity.email,
+    ]
+  )
+
+  return result.rows[0].id
 }

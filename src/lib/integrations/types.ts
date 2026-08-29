@@ -21,11 +21,21 @@ export type IntegrationPullRequest = {
   title: string
   state: string
   authorLogin: string | null
+  author: IntegrationIdentity | null
   draft: boolean
   openedAt: string
   closedAt: string | null
   mergedAt: string | null
   mergeCommitSha: string | null
+}
+
+export type IntegrationIdentity = {
+  externalId: string
+  login: string
+  displayName: string | null
+  avatarUrl: string | null
+  profileUrl: string | null
+  email: string | null
 }
 
 export type IntegrationPullRequestReview = {
