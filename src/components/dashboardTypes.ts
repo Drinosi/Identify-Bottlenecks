@@ -58,6 +58,9 @@ export type Repository = {
   last_workflow_run_synced_at: string | null
   workflow_run_sync_status: SyncStatus
   workflow_run_sync_error: string | null
+  last_commit_synced_at: string | null
+  commit_sync_status: SyncStatus
+  commit_sync_error: string | null
   updated_at: string
 }
 

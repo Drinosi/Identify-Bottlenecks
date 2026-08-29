@@ -149,6 +149,9 @@ export async function getWorkspaceForUser(user: WorkspaceUser) {
           last_workflow_run_synced_at,
           workflow_run_sync_status,
           workflow_run_sync_error,
+          last_commit_synced_at,
+          commit_sync_status,
+          commit_sync_error,
           updated_at
         FROM github_repositories
         WHERE github_installation_id = $1

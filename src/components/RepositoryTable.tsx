@@ -12,11 +12,14 @@ type RepositoryTableProps = {
   isGithubSyncPending: boolean
   isPullRequestSyncPending: boolean
   isWorkflowRunSyncPending: boolean
+  isCommitSyncPending: boolean
   syncingPullRequestRepositoryId: string | null
   syncingWorkflowRunRepositoryId: string | null
+  syncingCommitRepositoryId: string | null
   onSyncRepositories: () => void
   onSyncPullRequests: (repositoryId?: string) => void
   onSyncWorkflowRuns: (repositoryId?: string) => void
+  onSyncCommits: (repositoryId?: string) => void
   onSyncAll?: () => void
 }
 
@@ -27,11 +30,14 @@ export function RepositoryTable({
   isGithubSyncPending,
   isPullRequestSyncPending,
   isWorkflowRunSyncPending,
+  isCommitSyncPending,
   syncingPullRequestRepositoryId,
   syncingWorkflowRunRepositoryId,
+  syncingCommitRepositoryId,
   onSyncRepositories,
   onSyncPullRequests,
   onSyncWorkflowRuns,
+  onSyncCommits,
   onSyncAll,
 }: RepositoryTableProps) {
   return (
@@ -100,6 +106,17 @@ export function RepositoryTable({
                   {isWorkflowRunSyncPending ? 'Syncing...' : 'Run'}
                 </span>
               </button>
+              <button
+                type='button'
+                onClick={() => onSyncCommits()}
+                disabled={isCommitSyncPending || !repositories.length}
+                className='inline-flex cursor-pointer items-center justify-between gap-3 rounded-lg text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60'
+              >
+                <span>All commits</span>
+                <span className='text-xs text-slate-500'>
+                  {isCommitSyncPending ? 'Syncing...' : 'Run'}
+                </span>
+              </button>
             </div>
           </details>
         ) : null}
@@ -110,8 +127,10 @@ export function RepositoryTable({
           <RepositorySearch
             onSyncPullRequests={onSyncPullRequests}
             onSyncWorkflowRuns={onSyncWorkflowRuns}
+            onSyncCommits={onSyncCommits}
             syncingPullRequestRepositoryId={syncingPullRequestRepositoryId}
             syncingWorkflowRunRepositoryId={syncingWorkflowRunRepositoryId}
+            syncingCommitRepositoryId={syncingCommitRepositoryId}
             repositories={repositories}
           />
         </>
