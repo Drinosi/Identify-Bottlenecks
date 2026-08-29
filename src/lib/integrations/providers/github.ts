@@ -38,6 +38,16 @@ export const githubProvider: IntegrationProvider = {
       title: pullRequest.title,
       state: pullRequest.state,
       authorLogin: pullRequest.user?.login ?? null,
+      author: pullRequest.user
+        ? {
+            externalId: String(pullRequest.user.id),
+            login: pullRequest.user.login,
+            displayName: null,
+            avatarUrl: pullRequest.user.avatar_url,
+            profileUrl: pullRequest.user.html_url,
+            email: null,
+          }
+        : null,
       draft: pullRequest.draft,
       openedAt: pullRequest.created_at,
       closedAt: pullRequest.closed_at,

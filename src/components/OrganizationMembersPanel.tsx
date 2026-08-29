@@ -2,7 +2,12 @@
 
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import type { Workspace } from '@/components/dashboardTypes'
+import type {
+  OrganizationInvitation,
+  OrganizationMember,
+} from '@/components/dashboardTypes'
 
 type OrganizationMembersPanelProps = {
   initialWorkspace: Workspace
@@ -17,12 +22,20 @@ export function OrganizationMembersPanel({
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
+  const [cancelInvite, setCancelInvite] =
+    useState<OrganizationInvitation | null>(null)
+  const [removeMember, setRemoveMember] = useState<OrganizationMember | null>(
+    null
+  )
+  const [isCancelPending, setIsCancelPending] = useState(false)
+  const [pendingMemberId, setPendingMemberId] = useState<string | null>(null)
   const organization = workspace.organization
   const members = workspace.members
   const invitations = workspace.invitations
 
   const canManageMembers =
     organization?.role === 'owner' || organization?.role === 'admin'
+  const canManageRoles = organization?.role === 'owner'
 
   async function handleInviteSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -78,6 +91,101 @@ export function OrganizationMembersPanel({
     setWorkspace(data as Workspace)
   }
 
+  async function handleCancelInvite() {
+    if (!cancelInvite) {
+      return
+    }
+
+    setError(null)
+    setMessage(null)
+    setIsCancelPending(true)
+
+    try {
+      const response = await fetch(
+        `/api/organizations/invitations/${cancelInvite.id}`,
+        {
+          method: 'DELETE',
+        }
+      )
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setError(data?.error ?? 'Unable to cancel invitation.')
+        return
+      }
+
+      setMessage(`Invitation to ${cancelInvite.email} cancelled.`)
+      setCancelInvite(null)
+      await refreshWorkspace()
+    } catch {
+      setError('Unable to cancel invitation. Refresh the page and try again.')
+    } finally {
+      setIsCancelPending(false)
+    }
+  }
+
+  async function handleRoleChange(member: OrganizationMember, role: string) {
+    setError(null)
+    setMessage(null)
+    setPendingMemberId(member.id)
+
+    try {
+      const response = await fetch(`/api/organizations/members/${member.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role }),
+      })
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setError(data?.error ?? 'Unable to update member role.')
+        return
+      }
+
+      setMessage(`${member.name} is now ${role}.`)
+      await refreshWorkspace()
+    } catch {
+      setError('Unable to update member role. Refresh the page and try again.')
+    } finally {
+      setPendingMemberId(null)
+    }
+  }
+
+  async function handleRemoveMember() {
+    if (!removeMember) {
+      return
+    }
+
+    setError(null)
+    setMessage(null)
+    setPendingMemberId(removeMember.id)
+
+    try {
+      const response = await fetch(
+        `/api/organizations/members/${removeMember.id}`,
+        {
+          method: 'DELETE',
+        }
+      )
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setError(data?.error ?? 'Unable to remove member.')
+        return
+      }
+
+      setMessage(`${removeMember.name} removed from the organization.`)
+      setRemoveMember(null)
+      await refreshWorkspace()
+    } catch {
+      setError('Unable to remove member. Refresh the page and try again.')
+    } finally {
+      setPendingMemberId(null)
+    }
+  }
+
   return (
     <section className='rounded-lg bg-white p-6'>
       <div className='flex items-start justify-between gap-4'>
@@ -111,9 +219,33 @@ export function OrganizationMembersPanel({
                         {member.email}
                       </p>
                     </div>
-                    <span className='rounded-full bg-white px-2.5 py-1 text-xs font-medium capitalize text-slate-700'>
-                      {member.role}
-                    </span>
+                    {canManageRoles && member.role !== 'owner' ? (
+                      <div className='flex shrink-0 items-center gap-2'>
+                        <select
+                          value={member.role}
+                          disabled={pendingMemberId === member.id}
+                          onChange={(event) =>
+                            handleRoleChange(member, event.target.value)
+                          }
+                          className='rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium capitalize text-slate-700 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 disabled:cursor-wait disabled:opacity-60'
+                        >
+                          <option value='member'>Member</option>
+                          <option value='admin'>Admin</option>
+                        </select>
+                        <button
+                          type='button'
+                          disabled={pendingMemberId === member.id}
+                          onClick={() => setRemoveMember(member)}
+                          className='rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-wait disabled:opacity-60'
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <span className='rounded-full bg-white px-2.5 py-1 text-xs font-medium capitalize text-slate-700'>
+                        {member.role}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))
@@ -147,13 +279,24 @@ export function OrganizationMembersPanel({
                       {invite.role}
                     </span>
                   </div>
-                  <button
-                    type='button'
-                    onClick={() => copyInviteUrl(invite.invite_url)}
-                    className='mt-3 inline-flex rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100'
-                  >
-                    Copy invite link
-                  </button>
+                  <div className='mt-3 flex flex-wrap gap-2'>
+                    <button
+                      type='button'
+                      onClick={() => copyInviteUrl(invite.invite_url)}
+                      className='inline-flex rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100'
+                    >
+                      Copy invite link
+                    </button>
+                    {canManageMembers ? (
+                      <button
+                        type='button'
+                        onClick={() => setCancelInvite(invite)}
+                        className='inline-flex rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-50'
+                      >
+                        Cancel invite
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))
             ) : (
@@ -203,6 +346,42 @@ export function OrganizationMembersPanel({
           Only organization owners and admins can invite members.
         </p>
       )}
+      <ConfirmDialog
+        open={Boolean(cancelInvite)}
+        title='Cancel invitation?'
+        description={
+          cancelInvite
+            ? `The invite link for ${cancelInvite.email} will stop working immediately.`
+            : ''
+        }
+        confirmLabel='Cancel invite'
+        isPending={isCancelPending}
+        tone='danger'
+        onConfirm={handleCancelInvite}
+        onCancel={() => {
+          if (!isCancelPending) {
+            setCancelInvite(null)
+          }
+        }}
+      />
+      <ConfirmDialog
+        open={Boolean(removeMember)}
+        title='Remove member?'
+        description={
+          removeMember
+            ? `${removeMember.name} will lose access to this organization immediately.`
+            : ''
+        }
+        confirmLabel='Remove member'
+        isPending={Boolean(removeMember && pendingMemberId === removeMember.id)}
+        tone='danger'
+        onConfirm={handleRemoveMember}
+        onCancel={() => {
+          if (!pendingMemberId) {
+            setRemoveMember(null)
+          }
+        }}
+      />
     </section>
   )
 }
