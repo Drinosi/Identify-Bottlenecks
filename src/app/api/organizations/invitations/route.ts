@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto'
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { sendInvitationEmail } from '@/lib/invitationEmail'
 
 const INVITABLE_ROLES = new Set(['admin', 'member'])
 
@@ -111,12 +112,32 @@ export async function POST(request: Request) {
 
   const baseUrl = process.env.BETTER_AUTH_URL ?? new URL(request.url).origin
   const invite = inviteResult.rows[0]
+  const inviteUrl = new URL('/join', baseUrl)
+  inviteUrl.searchParams.set('invite', invite.token)
+  let emailStatus: 'sent' | 'logged' | 'failed' = 'failed'
+
+  try {
+    const delivery = await sendInvitationEmail({
+      to: invite.email,
+      organizationName: membership.organization_name,
+      inviterName: session.user.name || session.user.email,
+      role: invite.role,
+      inviteUrl: inviteUrl.toString(),
+    })
+    emailStatus = delivery.status
+  } catch {
+    // Keep the saved invitation usable without logging its secret token.
+    console.error('Invitation email delivery failed', {
+      invitationId: invite.id,
+    })
+  }
 
   return NextResponse.json(
     {
+      email_status: emailStatus,
       invite: {
         ...invite,
-        invite_url: `${baseUrl}/join?invite=${invite.token}`,
+        invite_url: inviteUrl.toString(),
         organization_name: membership.organization_name,
       },
     },

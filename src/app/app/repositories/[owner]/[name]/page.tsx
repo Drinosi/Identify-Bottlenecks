@@ -133,20 +133,25 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
   const pullRequestsResult = await db.query(
     `
     SELECT
-      number,
-      title,
-      state,
-      author_login,
-      draft,
-      opened_at,
-      closed_at,
-      merged_at,
-      first_reviewed_at,
-      review_count,
-      updated_at
+      github_pull_requests.number,
+      github_pull_requests.title,
+      github_pull_requests.state,
+      github_pull_requests.author_login,
+      github_pull_requests.author_identity_id,
+      integration_identities.avatar_url AS author_avatar_url,
+      integration_identities.profile_url AS author_profile_url,
+      github_pull_requests.draft,
+      github_pull_requests.opened_at,
+      github_pull_requests.closed_at,
+      github_pull_requests.merged_at,
+      github_pull_requests.first_reviewed_at,
+      github_pull_requests.review_count,
+      github_pull_requests.updated_at
     FROM github_pull_requests
-    WHERE github_repository_id = $1
-    ORDER BY opened_at DESC
+    LEFT JOIN integration_identities
+      ON integration_identities.id = github_pull_requests.author_identity_id
+    WHERE github_pull_requests.github_repository_id = $1
+    ORDER BY github_pull_requests.opened_at DESC
     LIMIT 50
     `,
     [repository.id]

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { DeleteOrganizationPanel } from '@/components/DeleteOrganizationPanel'
 import { ProfileSaveButton } from '@/components/ProfileSaveButton'
 import { GitHubSettingsPanel } from '@/components/GitHubSettingsPanel'
 import { OrganizationMembersPanel } from '@/components/OrganizationMembersPanel'
@@ -59,6 +60,7 @@ export default async function OrganizationPage({
   const canManageOrganization =
     organization?.organization_role === 'owner' ||
     organization?.organization_role === 'admin'
+  const canDeleteOrganization = organization?.organization_role === 'owner'
   const resolvedSearchParams = searchParams ? await searchParams : undefined
   const status =
     typeof resolvedSearchParams?.status === 'string'
@@ -233,6 +235,11 @@ export default async function OrganizationPage({
                 thresholds.
               </section>
             )}
+
+            <DeleteOrganizationPanel
+              organizationName={organization.organization_name}
+              canDeleteOrganization={canDeleteOrganization}
+            />
           </>
         ) : (
           <section className='rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center'>

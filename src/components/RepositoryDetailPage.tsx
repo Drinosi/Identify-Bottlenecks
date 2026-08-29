@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { MetricCard } from '@/components/MetricCard'
 
 type RepositoryDetailPageProps = {
@@ -41,6 +42,9 @@ type PullRequest = {
   title: string
   state: string
   author_login: string | null
+  author_identity_id: string | null
+  author_avatar_url: string | null
+  author_profile_url: string | null
   draft: boolean
   opened_at: string
   closed_at: string | null
@@ -174,7 +178,7 @@ export function RepositoryDetailPage({ detail }: RepositoryDetailPageProps) {
                         </span>
                       </td>
                       <td className='px-4 py-3 text-slate-700'>
-                        {pullRequest.author_login ?? 'Unknown'}
+                        <AuthorCell pullRequest={pullRequest} />
                       </td>
                       <td className='px-4 py-3 text-slate-700'>
                         {formatDate(pullRequest.opened_at)}
@@ -287,6 +291,57 @@ function EmptyState({ title, body }: { title: string; body: string }) {
         {body}
       </p>
     </div>
+  )
+}
+
+function AuthorCell({ pullRequest }: { pullRequest: PullRequest }) {
+  const authorLogin = pullRequest.author_login ?? 'Unknown'
+  const content = (
+    <>
+      {pullRequest.author_avatar_url ? (
+        <Image
+          src={pullRequest.author_avatar_url}
+          alt=''
+          width={24}
+          height={24}
+          unoptimized
+          className='h-6 w-6 rounded-full border border-slate-200'
+        />
+      ) : (
+        <span className='grid h-6 w-6 place-items-center rounded-full border border-slate-200 bg-slate-100 text-[10px] font-semibold uppercase text-slate-500'>
+          {authorLogin.slice(0, 1)}
+        </span>
+      )}
+      <span className='truncate'>{authorLogin}</span>
+    </>
+  )
+
+  if (pullRequest.author_identity_id) {
+    return (
+      <Link
+        href={`/app/authors/${pullRequest.author_identity_id}`}
+        className='inline-flex max-w-44 items-center gap-2 text-slate-700 underline-offset-2 hover:text-brand-700 hover:underline'
+      >
+        {content}
+      </Link>
+    )
+  }
+
+  if (pullRequest.author_profile_url) {
+    return (
+      <a
+        href={pullRequest.author_profile_url}
+        target='_blank'
+        rel='noreferrer'
+        className='inline-flex max-w-44 items-center gap-2 text-slate-700 underline-offset-2 hover:text-brand-700 hover:underline'
+      >
+        {content}
+      </a>
+    )
+  }
+
+  return (
+    <span className='inline-flex max-w-44 items-center gap-2'>{content}</span>
   )
 }
 

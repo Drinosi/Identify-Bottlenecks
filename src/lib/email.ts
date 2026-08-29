@@ -33,7 +33,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
       )
     }
 
-    return
+    return { status: 'sent' as const }
   }
 
   console.info(
@@ -44,4 +44,5 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
       text,
     ].join('\n')
   )
+  return { status: 'logged' as const }
 }

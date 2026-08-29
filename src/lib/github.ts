@@ -27,7 +27,10 @@ export type GitHubPullRequest = {
   merged_at: string | null
   merge_commit_sha: string | null
   user: {
+    id: number
     login: string
+    avatar_url: string | null
+    html_url: string | null
   } | null
 }
 

@@ -126,6 +126,44 @@ export async function POST(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  })
+
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  const body = await request.json().catch(() => null)
+  const organizationName =
+    typeof body?.organizationName === 'string' ? body.organizationName : ''
+
+  const result = await db.query(
+    `
+    DELETE FROM organizations
+    USING organization_members
+    WHERE organizations.id = organization_members.organization_id
+      AND organization_members.user_id = $1
+      AND organization_members.role = 'owner'
+      AND organizations.name = $2
+    RETURNING organizations.id
+    `,
+    [session.user.id, organizationName]
+  )
+
+  if (!result.rows[0]) {
+    return NextResponse.json(
+      {
+        error: 'Organization not found or you do not have access to delete it',
+      },
+      { status: 404 }
+    )
+  }
+
+  return NextResponse.json({ success: true })
+}
+
 function createSlug(value: string) {
   return (
     value

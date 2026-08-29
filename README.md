@@ -1,4 +1,4 @@
-# Identify Bottlenecks
+# Bottlenecks
 
 Next.js app with Better Auth and Postgres
 
