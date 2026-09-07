@@ -203,6 +203,7 @@ export async function fetchRepositoryCommits(
 ) {
   const token = await createInstallationAccessToken(installationId)
   const url = new URL(`https://api.github.com/repos/${owner}/${repo}/commits`)
+
   url.searchParams.set('sha', defaultBranch)
   url.searchParams.set('per_page', '100')
 
@@ -210,7 +211,20 @@ export async function fetchRepositoryCommits(
     url.searchParams.set('since', new Date(updatedSince).toISOString())
   }
 
-  return fetchPaginated<GitHubCommit>(url.toString(), token)
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/commits`,
+    {
+      headers: {
+        ...createGitHubHeaders(token),
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2026-03-10',
+      },
+    }
+  )
+
+  const commits = await response.json()
+
+  return commits
 }
 
 async function createInstallationAccessToken(installationId: string) {

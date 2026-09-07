@@ -19,8 +19,6 @@ export async function POST(request: Request) {
     [email]
   )
 
-  console.log(result.rows[0])
-
   return NextResponse.json({
     available: !result.rows[0],
   })
