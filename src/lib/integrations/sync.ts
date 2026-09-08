@@ -588,7 +588,8 @@ export async function syncCommitsForUser(
               client,
               repository.organization_id,
               'github',
-              commit.author
+              commit.author,
+              commit.message
             )
           : null
 
@@ -788,9 +789,10 @@ async function upsertIntegrationIdentity(
       avatar_url,
       profile_url,
       email,
-      updated_at
+      updated_at,
+      commit_message
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9)
     ON CONFLICT (organization_id, provider, external_id)
     DO UPDATE SET
       login = EXCLUDED.login,
@@ -798,6 +800,7 @@ async function upsertIntegrationIdentity(
       avatar_url = EXCLUDED.avatar_url,
       profile_url = EXCLUDED.profile_url,
       email = EXCLUDED.email,
+      commit_message = EXCLUDED.commit_message,
       updated_at = NOW()
     RETURNING id
     `,
@@ -810,6 +813,7 @@ async function upsertIntegrationIdentity(
       identity.avatarUrl,
       identity.profileUrl,
       identity.email,
+      identity.commitMessage,
     ]
   )
 
