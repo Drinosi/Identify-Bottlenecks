@@ -31,7 +31,10 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
       integration_identities.avatar_url,
       integration_identities.profile_url,
       integration_identities.email,
+      integration_identities.commit_message,
       integration_identities.updated_at,
+   
+
       organizations.name AS organization_name
     FROM integration_identities
     INNER JOIN organizations
