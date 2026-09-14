@@ -1,8 +1,8 @@
 type RepositoryCommitActivityProps = {
   commitActivity: {
-    week: number
-    total: number
     days: number[]
+    total: number
+    week: number
   }[]
 }
 

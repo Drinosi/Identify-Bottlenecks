@@ -7,6 +7,25 @@ import {
 } from '@/lib/github'
 import type { IntegrationProvider } from '@/lib/integrations/types'
 
+type GitHubCommit = {
+  sha: string
+  html_url: string | null
+  commit: {
+    message: string
+    author?: {
+      name?: string
+      email?: string
+      date?: string
+    }
+  }
+  author?: {
+    id: number
+    login: string
+    avatar_url: string
+    html_url: string
+  } | null
+}
+
 export const githubProvider: IntegrationProvider = {
   id: 'github',
   label: 'GitHub',
@@ -91,7 +110,7 @@ export const githubProvider: IntegrationProvider = {
     }))
   },
   async listCommits(connection, repository, options) {
-    const commits = await fetchRepositoryCommits(
+    const commits: GitHubCommit[] = await fetchRepositoryCommits(
       connection.externalInstallationId,
       repository.owner,
       repository.name,
@@ -103,6 +122,7 @@ export const githubProvider: IntegrationProvider = {
       externalId: commit.sha,
       sha: commit.sha,
       message: commit.commit.message,
+
       author: commit.author
         ? {
             externalId: String(commit.author.id),
@@ -113,6 +133,7 @@ export const githubProvider: IntegrationProvider = {
             email: commit.commit.author?.email ?? null,
           }
         : null,
+
       authorName: commit.commit.author?.name ?? null,
       authorEmail: commit.commit.author?.email ?? null,
       committedAt: commit.commit.author?.date ?? new Date().toISOString(),

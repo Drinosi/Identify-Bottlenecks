@@ -30,7 +30,7 @@ type RepositoryDetail = {
     days: number[]
     total: number
     week: number
-  }
+  }[]
   metrics: {
     totalPullRequests: number
     openPullRequests: number
