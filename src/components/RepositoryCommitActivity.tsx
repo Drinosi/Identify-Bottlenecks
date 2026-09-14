@@ -19,7 +19,6 @@ export default function RepositoryCommitActivity({
 
   const formatDate = (timestamp: number, dayIndex: number) => {
     const date = new Date(timestamp * 1000)
-
     date.setDate(date.getDate() + dayIndex)
 
     return date.toLocaleDateString('en-US', {
@@ -27,6 +26,24 @@ export default function RepositoryCommitActivity({
       day: 'numeric',
       year: 'numeric',
     })
+  }
+
+  const getDate = (timestamp: number, dayIndex: number) => {
+    const date = new Date(timestamp * 1000)
+    date.setDate(date.getDate() + dayIndex)
+
+    return date
+  }
+
+  const isFutureDate = (date: Date) => {
+    const today = new Date()
+
+    today.setHours(0, 0, 0, 0)
+
+    const checkDate = new Date(date)
+    checkDate.setHours(0, 0, 0, 0)
+
+    return checkDate > today
   }
 
   const formatTooltip = (
@@ -43,12 +60,7 @@ export default function RepositoryCommitActivity({
     <div className='w-full overflow-x-auto'>
       <div className='min-w-[650px]'>
         {/* Month labels */}
-        <div
-          className='mb-2 grid'
-          style={{
-            gridTemplateColumns: `repeat(${commitActivity.length}, minmax(0, 1fr))`,
-          }}
-        >
+        <div className='mb-2 flex gap-[3px]'>
           {commitActivity.map((week, index) => {
             const date = new Date(week.week * 1000)
 
@@ -59,7 +71,7 @@ export default function RepositoryCommitActivity({
               index === 0 || date.getMonth() !== previousDate?.getMonth()
 
             return (
-              <div key={week.week} className='text-xs text-gray-500'>
+              <div key={week.week} className='w-3 flex-1 text-xs text-gray-500'>
                 {isFirstWeek &&
                   date.toLocaleDateString('en-US', {
                     month: 'short',
@@ -70,23 +82,29 @@ export default function RepositoryCommitActivity({
         </div>
 
         {/* Activity grid */}
-        <div
-          className='grid'
-          style={{
-            gridTemplateColumns: `repeat(${commitActivity.length}, minmax(0, 1fr))`,
-            gridTemplateRows: 'repeat(7, 1fr)',
-            gap: '3px',
-          }}
-        >
-          {commitActivity.map((week) =>
-            week.days.map((count, dayIndex) => (
-              <div
-                key={`${week.week}-${dayIndex}`}
-                className={`aspect-square w-full rounded-[2px] ${getActivityColor(count)}`}
-                title={formatTooltip(week.week, dayIndex, count)}
-              />
-            ))
-          )}
+        <div className='flex gap-[3px]'>
+          {commitActivity.map((week) => (
+            <div key={week.week} className='flex flex-1 flex-col gap-[3px]'>
+              {week.days.map((count, dayIndex) => {
+                const date = getDate(week.week, dayIndex)
+                const future = isFutureDate(date)
+
+                return (
+                  <div
+                    key={`${week.week}-${dayIndex}`}
+                    className={`aspect-square w-full rounded-[2px] ${
+                      future ? 'bg-transparent' : getActivityColor(count)
+                    }`}
+                    title={
+                      future
+                        ? undefined
+                        : formatTooltip(week.week, dayIndex, count)
+                    }
+                  />
+                )
+              })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
