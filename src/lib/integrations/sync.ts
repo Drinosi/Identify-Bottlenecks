@@ -776,7 +776,8 @@ async function upsertIntegrationIdentity(
   },
   organizationId: string,
   provider: string,
-  identity: IntegrationIdentity
+  identity: IntegrationIdentity,
+  commitMessage?: string
 ) {
   const result = await client.query(
     `
@@ -813,7 +814,7 @@ async function upsertIntegrationIdentity(
       identity.avatarUrl,
       identity.profileUrl,
       identity.email,
-      identity.commitMessage,
+      commitMessage ?? '',
     ]
   )
 
