@@ -151,6 +151,25 @@ export async function fetchRepositoryPullRequests(
   )
 }
 
+export async function fetchAuthorCommitsActivity(
+  owner: string,
+  repo: string,
+  installationId: string
+) {
+  const token = await createInstallationAccessToken(installationId)
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/stats/commit_activity`,
+    {
+      headers: {
+        ...createGitHubHeaders(token),
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2026-03-10',
+      },
+    }
+  )
+
+  return await response.json()
+}
 export async function fetchPullRequestReviews(
   installationId: string,
   owner: string,
@@ -229,6 +248,7 @@ export async function fetchRepositoryCommits(
 
 async function createInstallationAccessToken(installationId: string) {
   const jwt = createGitHubAppJwt()
+
   const response = await fetch(
     `https://api.github.com/app/installations/${installationId}/access_tokens`,
     {

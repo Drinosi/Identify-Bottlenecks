@@ -62,7 +62,7 @@ type AuthorPullRequest = {
   review_count: number
 }
 
-export function AuthorDetailPage({
+export async function AuthorDetailPage({
   identity,
   metrics,
   repositories,

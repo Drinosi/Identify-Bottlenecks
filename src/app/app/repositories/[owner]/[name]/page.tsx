@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { RepositoryDetailPage } from '@/components/RepositoryDetailPage'
+import { fetchAuthorCommitsActivity } from '@/lib/github'
 
 type RepositoryPageProps = {
   params: Promise<{
@@ -37,6 +38,7 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
       github_repositories.last_workflow_run_synced_at,
       github_repositories.updated_at,
       github_installations.account_login,
+      github_installations.installation_id,
       organizations.name AS organization_name,
       organization_members.role
     FROM github_repositories
@@ -59,6 +61,12 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
   if (!repository) {
     notFound()
   }
+
+  const commitActivity = await fetchAuthorCommitsActivity(
+    owner,
+    name,
+    repository.installation_id
+  )
 
   const metricsResult = await db.query(
     `
@@ -183,6 +191,7 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
       user={session.user}
       detail={{
         repository,
+        commitActivity,
         metrics: {
           totalPullRequests: metrics?.total_pull_requests ?? 0,
           openPullRequests: metrics?.open_pull_requests ?? 0,

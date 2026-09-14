@@ -2,6 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { MetricCard } from '@/components/MetricCard'
 
+import RepositoryCommitActivity from '@/components/RepositoryCommitActivity'
+
 type RepositoryDetailPageProps = {
   user: {
     name: string
@@ -15,6 +17,7 @@ type RepositoryDetail = {
     owner: string
     name: string
     full_name: string
+
     default_branch: string
     private: boolean
     last_pull_request_synced_at: string | null
@@ -23,6 +26,11 @@ type RepositoryDetail = {
     organization_name: string
     role: string
   }
+  commitActivity: {
+    days: number[]
+    total: number
+    week: number
+  }[]
   metrics: {
     totalPullRequests: number
     openPullRequests: number
@@ -141,6 +149,7 @@ export function RepositoryDetailPage({ detail }: RepositoryDetailPageProps) {
           />
         </section>
 
+        <RepositoryCommitActivity commitActivity={detail.commitActivity} />
         <section className='min-w-0 rounded-lg bg-white p-4 sm:p-6'>
           <div className='mb-5'>
             <h2 className='m-0 text-xl font-semibold'>Pull Requests</h2>
